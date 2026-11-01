@@ -1,0 +1,465 @@
+<title>Brillouin Surface Explorer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-notebook column — framing, unit cell + controls, verdict, three linked plots, notes. */
+:root{
+  --bg:#f3f5f7; --surface:#fcfcfb; --fg:#14171c; --fg2:#4a5260; --muted:#7a8290; --line:#d9dee5;
+  --warn:#b65c00; --good:#0a7d32; --gapfill:rgba(42,120,214,.10);
+  --seq0:#cde2fb; --seq1:#86b6ef; --seq2:#3987e5; --seq3:#1c5cab; --seq4:#0d366b;
+  --sx:#2a78d6; --sy:#eb6834; --sz:#1baf7a; --sd:#6250d6; --hostfill:#dfe5ee; --core:#14171c;
+  --display:"Newsreader",Georgia,"Times New Roman",serif;
+  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111315; --surface:#1a1a19; --fg:#eceef0; --fg2:#b8bec8; --muted:#868e9a; --line:#2e3238;
+  --warn:#e8a040; --good:#4cc46f; --gapfill:rgba(57,135,229,.16);
+  --seq0:#0d366b; --seq1:#1c5cab; --seq2:#3987e5; --seq3:#86b6ef; --seq4:#cde2fb;
+  --sx:#3987e5; --sy:#d95926; --sz:#199e70; --sd:#9085e9; --hostfill:#2a2f36; --core:#eceef0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111315; --surface:#1a1a19; --fg:#eceef0; --fg2:#b8bec8; --muted:#868e9a; --line:#2e3238;
+  --warn:#e8a040; --good:#4cc46f; --gapfill:rgba(57,135,229,.16);
+  --seq0:#0d366b; --seq1:#1c5cab; --seq2:#3987e5; --seq3:#86b6ef; --seq4:#cde2fb;
+  --sx:#3987e5; --sy:#d95926; --sz:#199e70; --sd:#9085e9; --hostfill:#2a2f36; --core:#eceef0; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.55 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 56px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1,h2{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4vw,40px);line-height:1.1}
+h2{font-size:19px}
+p{margin:0;max-width:68ch}
+.lede{display:flex;flex-direction:column;gap:10px}
+.lede p{color:var(--fg2)}
+.eyebrow{font:500 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+.setup{display:grid;grid-template-columns:1.2fr 1fr;gap:24px;align-items:start}
+.setup .plot{min-height:430px}
+.figcol{display:flex;flex-direction:column;gap:12px;min-width:0}
+.schem{width:100%;max-width:420px;height:auto;align-self:center}
+.controls{display:flex;flex-direction:column;gap:18px;min-width:0}
+.group{display:flex;flex-direction:column;gap:8px;min-width:0}
+.group h3{margin:0;font:600 12px/1.2 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--fg2)}
+.row{display:grid;grid-template-columns:72px 1fr 52px;align-items:center;gap:10px;font-size:13px}
+.row label{color:var(--fg2);font-family:var(--mono);font-size:12px}
+.row output{font-family:var(--mono);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--sx)}
+.presets{display:flex;flex-wrap:wrap;gap:8px}
+.presets button{font:500 13px var(--body);color:var(--fg);background:transparent;border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer}
+.presets button[aria-pressed="true"]{background:var(--fg);color:var(--surface);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--sx);outline-offset:2px}
+.hint{font-size:12.5px;color:var(--muted)}
+.readout{font:12px/1.5 var(--mono);color:var(--fg2);font-variant-numeric:tabular-nums}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.verdict{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.cell{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.cell .k{font:500 11px/1.2 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.cell .v{font:500 22px/1.2 var(--mono);font-variant-numeric:tabular-nums}
+.cell .s{font-size:12.5px;color:var(--fg2)}
+.pill{display:inline-flex;align-items:center;gap:6px;font:500 12px var(--body);padding:2px 10px;border-radius:999px;border:1px solid currentColor;width:fit-content}
+.pill.ok{color:var(--good)} .pill.miss{color:var(--warn)}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:560px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line)}
+th{font:600 11px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.plots{display:grid;grid-template-columns:1.35fr 1fr;gap:18px}
+.plots .big{grid-row:span 2}
+.plotcard{display:flex;flex-direction:column;gap:8px;min-width:0}
+.plotcard .head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.plot{width:100%;min-height:320px}
+.big .plot{min-height:620px}
+.legend{display:flex;gap:16px;font-size:12.5px;color:var(--fg2);flex-wrap:wrap}
+.sw{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+select{font:13px var(--body);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:4px 8px}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px}
+.notes section{display:flex;flex-direction:column;gap:8px;min-width:0}
+.notes p,.notes li{color:var(--fg2);font-size:14px}
+.notes ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.prose{display:flex;flex-direction:column;gap:12px}
+.prose p{color:var(--fg2);font-size:15px;line-height:1.65}
+.prose b{color:var(--fg)}
+.prose a{color:var(--sx)}
+@media (max-width:860px){.plots,.setup{grid-template-columns:1fr}.plots .big{grid-row:auto}.big .plot{min-height:460px}.setup .plot{min-height:340px}}
+</style>
+
+<div class="wrap">
+  <header class="lede">
+    <span class="eyebrow">Floquet–Bloch · 3D mass-in-mass lattice · 0 ≤ k<sub>x</sub>, k<sub>y</sub>, k<sub>z</sub> ≤ π/a</span>
+    <h1>Dispersion over the faces of the 3D irreducible Brillouin zone</h1>
+    <p>Each cell is a host mass with a resonator inside it. The resonator hangs on three springs r<sub>x</sub>, r<sub>y</sub>, r<sub>z</sub>, so it has its own frequency in each direction. The host connects to its six neighbours through springs k<sub>x</sub>, k<sub>y</sub>, k<sub>z</sub>. The irreducible zone is the box 0 ≤ k<sub>i</sub> ≤ π/a. The usual band diagram walks its 12 <em>edges</em>, and this page also plots ω over its 6 <em>faces</em>, unfolded flat like a cube net.</p>
+  </header>
+
+  <div class="panel setup">
+    <div class="figcol">
+      <h2>Unit cell</h2>
+      <svg class="schem" id="schem" viewBox="0 0 420 300" role="img" aria-label="Cross-section in the x–y plane: host mass with an internal resonator on springs r_x and r_y, connected to neighbouring hosts by springs k_x and k_y"></svg>
+      <div class="plot" id="pCell"></div>
+      <p class="hint">Top: a cut through the x–y plane. Bottom: the cell in 3D with its six neighbours. The grey boxes are host masses, the dark balls are resonators, and coil thickness follows stiffness. Drag to rotate, and click a legend entry to hide it.</p>
+    </div>
+    <div class="controls" role="group" aria-label="Lattice parameters">
+      <div class="group">
+        <h3>Examples</h3>
+        <div class="presets" id="presets"></div>
+        <p class="hint" id="presetNote"></p>
+      </div>
+      <div class="group" id="gK"><h3>Host ↔ neighbour springs</h3></div>
+      <div class="group" id="gR"><h3>Resonator ↔ host springs</h3></div>
+      <div class="group" id="gM"><h3>Masses</h3><p class="hint">Host mass m₁ = 1.</p></div>
+      <p class="readout" id="resFreq"></p>
+      <div class="group" id="gS"><h3>Shear ratio</h3>
+        <p class="hint">A real spring or beam also resists sideways motion a little. Here each host bond gets sideways stiffness s × its axial stiffness. At s = 0, motion along x only feels the x-springs, so each direction becomes an independent 1D chain and the surfaces go flat.</p></div>
+      <div class="group" id="gG"><h3>Diagonal coupling</h3>
+        <p class="hint">Springs g from each host to its 12 diagonal neighbours ⟨110⟩. A diagonal spring pulls along two axes at once, so it mixes the directions of motion. For example, the x–y coupling is proportional to sin k<sub>x</sub>a · sin k<sub>y</sub>a. On every face, motion perpendicular to the face stays separate (mirror symmetry), so its crossings stay exact. The two in-plane motions mix, so their crossings open up inside the face.</p></div>
+    </div>
+  </div>
+
+  <div class="verdict" id="verdict" aria-live="polite"></div>
+
+  <div class="plots">
+    <div class="plotcard big">
+      <div class="head"><h2>Dispersion surfaces over the unfolded zone</h2>
+        <select id="polSel" aria-label="Which bands to show"><option value="all">Show: all 6 bands</option><option value="lo">Show: bands 1–3</option><option value="hi">Show: bands 4–6</option><option value="0">Band 1</option><option value="1">Band 2</option><option value="2">Band 3</option><option value="3">Band 4</option><option value="4">Band 5</option><option value="5">Band 6</option></select></div>
+      <div class="legend"><span>Colour = direction of motion:</span><span><i class="sw" style="background:var(--sx)"></i>x</span><span><i class="sw" style="background:var(--sy)"></i>y</span><span><i class="sw" style="background:var(--sz)"></i>z</span><span>blended colour = mixed motion</span><span><i class="sw" style="background:var(--fg)"></i>Standard path (edges)</span></div>
+      <div class="plot" id="pNet"></div>
+      <p class="hint">The k<sub>z</sub> = 0 face Γ X S Y is the square in the middle, and the other five faces fold out around it like a cube net. Sheets are bands sorted by frequency. Where two sheets touch and the colour switches abruptly, the bands truly cross. Where they bend apart and the colour blends smoothly, the crossing is avoided because of the coupling. Pick bands 1–3 or 4–6 for a clearer view. The black curves are the segments of the conventional band diagram.</p>
+    </div>
+    <div class="plotcard">
+      <div class="head"><h2>Conventional band diagram</h2></div>
+      <div class="plot" id="pPath"></div>
+      <p class="hint">The shaded band is the complete gap between band 3 and band 4, found by searching the whole volume. Dotted lines mark the three resonance frequencies √(r<sub>i</sub>/μ).</p>
+    </div>
+    <div class="plotcard">
+      <div class="head"><h2>The zone in k-space</h2>
+        <select id="bandSel" aria-label="Band to colour"></select></div>
+      <div class="plot" id="pBox"></div>
+      <p class="hint">The six faces are coloured by ω of one band, counted from the bottom. The ● marks that band's extremum in the full volume.</p>
+    </div>
+  </div>
+
+  <div class="panel tablewrap">
+    <table id="tbl" aria-label="Band-gap edges by search dimension"></table>
+  </div>
+
+  <div class="notes">
+    <section><h2>What this lattice shows</h2>
+      <ul>
+        <li><b>Three resonances:</b> on a fixed host, the resonator would ring at √(r<sub>x</sub>/μ), √(r<sub>y</sub>/μ) and √(r<sub>z</sub>/μ). Each one opens a gap for waves whose motion is along that axis, and a <b>complete</b> gap exists only where all three overlap.</li>
+        <li><b>Anisotropy:</b> the surfaces show how the slope (group velocity) changes with direction across every face, which the line plot only shows along the 12 edges.</li>
+        <li><b>Crossings and avoided crossings:</b> without coupling (g = 0), sheets for different directions of motion pass through each other. With diagonal springs, crossings between the two in-plane motions on a face open into avoided crossings, and the colour blends smoothly from one motion to the other. Crossings with the out-of-plane motion stay exact because the face is a mirror plane.</li>
+        <li><b>Where the band edges sit:</b> in all the examples here, the complete gap opens between a corner (R) and Γ, so the path, the faces and the volume agree. The surface view earns its keep on the crossings, not on the gap.</li>
+      </ul>
+    </section>
+    <section><h2>Model</h2>
+      <p>Each mass moves in 3D. Axial host bonds along i have stretching stiffness k<sub>i</sub> and sideways stiffness s·k<sub>i</sub>. Optional central springs g to the 12 ⟨110⟩ neighbours add 2g(1 − cos k·d) n nᵀ for each bond direction n. The resonator hangs on r<sub>x</sub>, r<sub>y</sub>, r<sub>z</sub> (springs on both sides combined), with host mass 1 and resonator mass μ. At each k, the page solves the 6 × 6 mass-weighted dynamical matrix numerically (Jacobi method) and takes each mode's share of motion along x, y and z from its eigenvector. Frequencies are in √(k/m₁) units and k is in π/a.</p>
+    </section>
+  </div>
+
+  <section class="panel prose" id="background">
+    <h2>Background and state of the art</h2>
+    <p><b>How dispersion is normally shown.</b> For a periodic medium, the Floquet–Bloch dispersion ω(k) is a set of sheets over the Brillouin zone. In practice it is almost always drawn along the edges of the irreducible Brillouin zone (IBZ). For 3D crystals, the k-paths are standardised for every Bravais lattice (Setyawan &amp; Curtarolo, <i>Comput. Mater. Sci.</i> 2010). The usual justification is that band extrema tend to lie on the IBZ boundary. Over 2D zones, full surfaces are common, for example Dirac cones and isofrequency contours used for negative refraction and beam steering.</p>
+    <p><b>Is the path enough?</b> This assumption is known to fail. Harrison, Kuchment, Sobolev &amp; Winn (<i>J. Phys. A</i> 40, 2007) constructed periodic operators whose spectral edges lie inside the zone. Craster, Antonakakis, Makwana &amp; Guenneau (<i>Phys. Rev. B</i> 86, 2012) warned of the "dangers of using the edges of the Brillouin zone". Maurin, Claeys, Deckers &amp; Desmet (<a href="https://www.sciencedirect.com/science/article/pii/S0020768317305103"><i>Int. J. Solids Struct.</i> 135, 2018</a>) ran hundreds of porous phononic-crystal simulations across the 17 plane crystallographic groups. They found the IBZ contour reliable only for highly symmetric lattices, and that a gap seen on the contour can be absent in the full zone. These systematic studies are all in 2D. I did not find a comparable statistical study for 3D lattices.</p>
+    <p><b>Dispersion surfaces in 3D.</b> Because ω(k<sub>x</sub>, k<sub>y</sub>, k<sub>z</sub>) cannot be drawn directly, 3D studies use high-symmetry paths, isofrequency surfaces, or selected planes. The closest example I found is a study of accordion-like 3D metamaterials (<a href="https://arxiv.org/abs/1804.02188">arXiv:1804.02188</a>). It plots dispersion surfaces on chosen cross-sections of the 3D IBZ to check which band gaps survive at oblique incidence. I did not find the specific construction used here: all faces of the 3D IBZ unfolded into one net, with the standard path drawn on top and the modes coloured by their direction of motion.</p>
+    <p><b>Direction-dependent resonators.</b> The unit cell here relates to 3D anisotropic locally resonant metamaterials. Ma et al. (<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5121349/"><i>Nat. Commun.</i> 2016</a>) built a solid metamaterial whose resonant unit has three translational modes and showed "polarization band gaps", where each direction of motion can be suppressed selectively. Faraci, Mendicino, Vincenti &amp; Comi (<a href="https://doaj.org/article/a3f1aab61fc6491bb5852f55dcf45448"><i>Appl. Sci.</i> 2023</a>) describe such materials with an anisotropic, frequency-dependent effective mass tensor that predicts polarization band gaps and polarization conversion.</p>
+    <p><b>Crossings and symmetry.</b> The colour behaviour on the net reflects a well-known mechanism. Bands of opposite mirror parity cannot mix, so their crossings are protected (He &amp; Chan, <a href="https://arxiv.org/abs/1409.3939">arXiv:1409.3939</a>, for photonic crystals). In phononic crystals, mirror-protected nodal rings with drumhead surface states have been observed experimentally (Deng et al., <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6467985/"><i>Nat. Commun.</i> 10, 1769, 2019</a>). Such degeneracies usually lie on mirror planes, which for an orthorhombic lattice are exactly the faces of the IBZ. That makes the face net a natural place to look for them.</p>
+  </section>
+
+  <section class="panel prose" id="about">
+    <h2>About this project</h2>
+    <p>During my PhD in metamaterials, almost everyone around me worked on 2D periodic structures. The routine was always the same: apply Floquet–Bloch boundary conditions to the unit cell, sweep the wavevector along the edge of the irreducible Brillouin zone, and draw the band diagram along that 1D line. At some point I asked myself what the same idea looks like one dimension up. For a 3D material, the irreducible zone is a solid, its boundary is a surface, and so the natural counterpart of the band diagram should be a dispersion <i>surface</i> drawn over that boundary.</p>
+    <p>This page is my attempt to make that concrete. I take a 3D mass-in-mass lattice: a host mass coupled to its neighbours by springs k<sub>x</sub>, k<sub>y</sub>, k<sub>z</sub>, and a resonator inside it held by its own springs r<sub>x</sub>, r<sub>y</sub>, r<sub>z</sub>, so it resonates at a different frequency in each direction. For this lattice the irreducible zone is a box. Its 12 edges are the usual band-diagram path, and its 6 faces unfold into a cube net, over which I plot every band as a sheet. I colour each sheet by the direction in which the masses move, and add a diagonal coupling to show how crossing sheets turn into avoided crossings.</p>
+    <p>Two things came out of it. First, for band-gap work the extra dimension mostly confirms the standard path, at least for this kind of lattice: the gap edges sit at the corners of the zone. Second, the surface view shows something the line plot cannot. You see where bands of different polarization cross, which of those crossings survive coupling, and how they line up with the mirror planes of the lattice. The same procedure works for any FEM unit-cell model: sweep the Bloch wavevector over the faces of the IBZ instead of its edges, at roughly four to ten times the cost of a standard band diagram.</p>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
+<script>
+const P=Math.PI,cos=Math.cos,sqrt=Math.sqrt;
+
+// ---- lattice model ----
+let prm;
+// cyclic Jacobi for a small real symmetric matrix: eigenvalues w, eigenvectors as columns of V
+function eigSym(A){const n=A.length,a=A.map(r=>[...r]),V=a.map((_,i)=>a.map((_,j)=>i===j?1:0));
+  for(let sweep=0;sweep<50;sweep++){let off=0;for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)off+=a[i][j]*a[i][j];if(off<1e-22)break;
+    for(let p=0;p<n;p++)for(let q=p+1;q<n;q++){if(Math.abs(a[p][q])<1e-300)continue;
+      const th=(a[q][q]-a[p][p])/(2*a[p][q]),t=Math.sign(th||1)/(Math.abs(th)+sqrt(th*th+1)),c=1/sqrt(t*t+1),s=t*c;
+      for(let k=0;k<n;k++){const akp=a[k][p],akq=a[k][q];a[k][p]=c*akp-s*akq;a[k][q]=s*akp+c*akq}
+      for(let k=0;k<n;k++){const apk=a[p][k],aqk=a[q][k];a[p][k]=c*apk-s*aqk;a[q][k]=s*apk+c*aqk}
+      for(let k=0;k<n;k++){const vkp=V[k][p],vkq=V[k][q];V[k][p]=c*vkp-s*vkq;V[k][q]=s*vkp+c*vkq}}}
+  return{w:a.map((r,i)=>r[i]),V}}
+const DIAG=[[1,1,0],[1,-1,0],[1,0,1],[1,0,-1],[0,1,1],[0,1,-1]].map(d=>({d,n:d.map(v=>v/Math.SQRT2)}));
+// 6 sorted frequencies with the share of motion along x, y, z for each
+function modes(k){const D=[[0,0,0],[0,0,0],[0,0,0]];
+  for(let i=0;i<3;i++){const c=1-cos(k[i]);for(let q=0;q<3;q++)D[q][q]+=2*(i===q?prm.k[i]:prm.s*prm.k[i])*c}
+  if(prm.g)for(const{d,n}of DIAG){const c=2*prm.g*(1-cos(d[0]*k[0]+d[1]*k[1]+d[2]*k[2]));
+    for(let a=0;a<3;a++)for(let b=0;b<3;b++)D[a][b]+=c*n[a]*n[b]}
+  const sm=sqrt(prm.mu),K=[...Array(6)].map(()=>Array(6).fill(0));
+  for(let a=0;a<3;a++){for(let b=0;b<3;b++)K[a][b]=D[a][b];const r=prm.r[a];K[a][a]+=r;K[a][a+3]=K[a+3][a]=-r/sm;K[a+3][a+3]=r/prm.mu}
+  const{w,V}=eigSym(K),idx=w.map((_,i)=>i).sort((x,y)=>w[x]-w[y]);
+  return{w:idx.map(i=>sqrt(Math.max(w[i],0))),pol:idx.map(i=>{const f=[0,1,2].map(a=>V[a][i]**2+V[a+3][i]**2),t=f[0]+f[1]+f[2];return f.map(v=>v/t)})}}
+const sortedBands=k=>modes(k).w;
+function toIBZ(k){return k.map(v=>{v=((v+P)%(2*P)+2*P)%(2*P)-P;return Math.abs(v)})}
+
+// ---- geometry ----
+const V={Γ:[0,0,0],X:[P,0,0],Y:[0,P,0],Z:[0,0,P],S:[P,P,0],U:[P,0,P],T:[0,P,P],R:[P,P,P]};
+const lerp=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
+const dist=(a,b)=>sqrt(a.reduce((s,v,i)=>s+(v-b[i])**2,0));
+const PATH=["ΓX","XS","SY","YΓ","ΓZ","ZU","UR","RT","TZ","YT","UX","SR"].map(s=>[s[0],s[1]]);
+const BREAKS=new Set([9,10,11]);
+const NS=160;
+const FACES=[
+  {name:"k_z = 0 (Γ X S Y)",k:(s,t)=>[s,t,0],n:(s,t)=>[s,t]},
+  {name:"k_y = 0 (Γ X U Z)",k:(s,t)=>[s,0,t],n:(s,t)=>[s,-t]},
+  {name:"k_x = 0 (Γ Y T Z)",k:(s,t)=>[0,s,t],n:(s,t)=>[-t,s]},
+  {name:"k_x = π (X S R U)",k:(s,t)=>[1,s,t],n:(s,t)=>[1+t,s]},
+  {name:"k_y = π (Y S R T)",k:(s,t)=>[s,1,t],n:(s,t)=>[s,1+t]},
+  {name:"k_z = π (Z U R T)",k:(s,t)=>[s,t,1],n:(s,t)=>[s,3-t]}];
+const NF=36;
+function faceGrid(){const pts=[],tri=[];
+  FACES.forEach((f,fi)=>{const base=pts.length;
+    for(let i=0;i<=NF;i++)for(let j=0;j<=NF;j++){const s=i/NF,t=j/NF;pts.push({k:f.k(s,t).map(v=>v*P),n:f.n(s,t),face:fi,s,t})}
+    const id=(i,j)=>base+i*(NF+1)+j;
+    for(let i=0;i<NF;i++)for(let j=0;j<NF;j++){tri.push([id(i,j),id(i+1,j),id(i+1,j+1)]);tri.push([id(i,j),id(i+1,j+1),id(i,j+1)])}});
+  return{pts,tri}}
+const FG=faceGrid();
+const NV=22,VOL=[];for(let i=0;i<=NV;i++)for(let j=0;j<=NV;j++)for(let l=0;l<=NV;l++)VOL.push([i*P/NV,j*P/NV,l*P/NV]);
+const vname=k=>Object.keys(V).find(n=>dist(V[n],k)<1e-9)||"";
+
+// ---- presets ----
+const PRESETS=[
+  {id:"coupled",label:"Coupled",note:"Diagonal springs g = 0.15 mix the directions of motion. On the k_z faces, crossing sheets bend apart and their colours blend. On the other four faces they still cross exactly. Set g to 0 to compare.",
+   k:[1,0.5,0.25],r:[0.3,0.5,0.8],mu:2,s:0.3,g:0.15},
+  {id:"aniso",label:"Uncoupled",note:"Same lattice with g = 0. The x, y and z motions are independent, so sheets cross freely and the colour flips sharply at each crossing.",
+   k:[1,0.5,0.25],r:[0.3,0.5,0.8],mu:2,s:0.3,g:0},
+  {id:"iso",label:"All directions equal",note:"Equal springs everywhere: a simple cubic lattice. The three directions of motion share one resonance, so the complete gap is as wide as it can be.",
+   k:[1,1,1],r:[0.5,0.5,0.5],mu:2,s:0.3,g:0},
+  {id:"chains",label:"No sideways stiffness",note:"s = 0 and g = 0: motion along x only feels the x-springs, so each direction is an independent 1D chain. Every sheet is flat in two directions of k.",
+   k:[1,0.5,0.25],r:[0.3,0.5,0.8],mu:2,s:0,g:0}];
+
+// ---- controls ----
+const SL=[];
+function addSlider(group,id,label,min,max,step,get,set){
+  const row=document.createElement("div");row.className="row";
+  row.innerHTML=`<label for="${id}">${label}</label><input type="range" id="${id}" min="${min}" max="${max}" step="${step}"><output for="${id}"></output>`;
+  document.getElementById(group).appendChild(row);
+  const inp=row.querySelector("input"),out=row.querySelector("output");
+  inp.addEventListener("input",()=>{set(+inp.value);out.textContent=(+inp.value).toFixed(2);markPreset(null);schedule()});
+  SL.push(()=>{inp.value=get();out.textContent=(+get()).toFixed(2)})}
+const AX=["x","y","z"],AXC=["--sx","--sy","--sz"];
+const dot=i=>`<i class="dot" style="background:var(${AXC[i]})"></i>`;
+for(let i=0;i<3;i++)addSlider("gK","k"+AX[i],`${dot(i)}k_${AX[i]}`,0.05,2,0.01,()=>prm.k[i],v=>prm.k[i]=v);
+for(let i=0;i<3;i++)addSlider("gR","r"+AX[i],`${dot(i)}r_${AX[i]}`,0.02,2,0.01,()=>prm.r[i],v=>prm.r[i]=v);
+addSlider("gM","mu","μ",0.1,5,0.01,()=>prm.mu,v=>prm.mu=v);
+addSlider("gS","s","s",0,1,0.01,()=>prm.s,v=>prm.s=v);
+addSlider("gG","g",`<i class="dot" style="background:var(--sd)"></i>g`,0,0.5,0.01,()=>prm.g,v=>prm.g=v);
+const presetsEl=document.getElementById("presets");
+PRESETS.forEach(p=>{const b=document.createElement("button");b.type="button";b.id="preset-"+p.id;b.textContent=p.label;
+  b.addEventListener("click",()=>loadPreset(p));presetsEl.appendChild(b)});
+function markPreset(p){PRESETS.forEach(q=>document.getElementById("preset-"+q.id).setAttribute("aria-pressed",String(p===q)));
+  document.getElementById("presetNote").textContent=p?p.note:"Custom parameters."}
+function loadPreset(p){prm={k:[...p.k],r:[...p.r],mu:p.mu,s:p.s,g:p.g};SL.forEach(f=>f());markPreset(p);schedule()}
+const bandSel=document.getElementById("bandSel");
+for(let b=0;b<6;b++){const o=document.createElement("option");o.value=b;o.textContent=`Colour: band ${b+1}`;bandSel.appendChild(o)}
+bandSel.value="2";
+
+// ---- search ----
+function refine(k0,band,sgn){let k=[...k0],f=sgn*sortedBands(k)[band],h=P/NV;
+  while(h>1e-6){let moved=false;for(let c=0;c<3;c++)for(const s of[1,-1]){const t=[...k];t[c]+=s*h;const ft=sgn*sortedBands(t)[band];if(ft>f+1e-13){k=t;f=ft;moved=true}}
+    if(!moved)h/=2}return{k:toIBZ(k),w:sgn*f}}
+function refineFace(fi,s,t,band,sgn){const f=FACES[fi],at=(s,t)=>f.k(s,t).map(v=>v*P);
+  let best=sgn*sortedBands(at(s,t))[band],h=1/NF;
+  while(h>1e-7){let moved=false;for(const[ds,dt]of[[1,0],[-1,0],[0,1],[0,-1]]){const S=s+ds*h,T=t+dt*h;
+      if(S<0||T<0||S>1||T>1)continue;const val=sgn*sortedBands(at(S,T))[band];if(val>best+1e-13){best=val;s=S;t=T;moved=true}}
+    if(!moved)h/=2}
+  return{k:at(s,t),w:sgn*best,n:f.n(s,t),face:fi}}
+function extremum(list,band,sgn){let j=0;list.forEach((w,i)=>{if(sgn*w[band]>sgn*list[j][band])j=i});return j}
+function analyse(){
+  const path=[];let s=0;const ticks=[0],lab=["Γ"];
+  PATH.forEach(([a,b],si)=>{const ka=V[a],kb=V[b],L=dist(ka,kb);
+    if(BREAKS.has(si))lab[lab.length-1]+="|"+a;
+    for(let i=0;i<=NS;i++){const t=i/NS,k=lerp(ka,kb,t),m=modes(k);path.push({s:s+L*t,k,w:m.w,pol:m.pol,brk:BREAKS.has(si)&&i===0})}
+    s+=L;ticks.push(s);lab.push(b)});
+  const fm=FG.pts.map(p=>modes(p.k)),fw=fm.map(m=>m.w);
+  const vw=VOL.map(sortedBands);
+  const res={};
+  for(const[band,sgn,key]of[[2,1,"lo"],[3,-1,"hi"]]){
+    const ip=extremum(path.map(p=>p.w),band,sgn),jf=extremum(fw,band,sgn),jv=extremum(vw,band,sgn);
+    const fp=FG.pts[jf],face=refineFace(fp.face,fp.s,fp.t,band,sgn);
+    let vol=refine(VOL[jv],band,sgn);if(sgn*face.w>sgn*vol.w)vol={k:face.k,w:face.w};
+    res[key]={path:{w:path[ip].w[band],k:path[ip].k},face,vol}}
+  return{path,ticks,lab,fm,fw,vw,res}}
+
+// ---- rendering ----
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const hexRgb=h=>{h=h.replace("#","");return[0,2,4].map(i=>parseInt(h.slice(i,i+2),16))};
+// blend the x/y/z colours by each mode's share of motion along that axis
+const polColor=(f,rgb)=>"rgb("+[0,1,2].map(c=>Math.round(f[0]*rgb[0][c]+f[1]*rgb[1][c]+f[2]*rgb[2][c])).join(",")+")";
+const polTxt=f=>`motion x ${(f[0]*100).toFixed(0)}% · y ${(f[1]*100).toFixed(0)}% · z ${(f[2]*100).toFixed(0)}%`;
+const fmtk=k=>"("+k.map(v=>(v/P).toFixed(3)).join(", ")+")";
+const pct=(a,b)=>((a-b)/Math.abs(b)*100);
+function where(k){const e=1e-4;let n=0;for(const v of k)if(v<e||Math.abs(v-P)<e)n++;
+  return n===3?"corner "+vname(k):n===2?"edge (on path)":n===1?"face":"interior"}
+function baseLayout(){const fg=css("--fg"),line=css("--line"),mut=css("--muted");
+  return{paper_bgcolor:css("--surface"),plot_bgcolor:css("--surface"),font:{family:"Public Sans, system-ui, sans-serif",color:fg,size:12},
+    margin:{l:52,r:14,t:10,b:40},showlegend:false,hoverlabel:{bgcolor:css("--surface"),bordercolor:line,font:{color:fg,family:"JetBrains Mono, monospace",size:11}},
+    _axis:{gridcolor:line,zerolinecolor:line,linecolor:line,tickfont:{color:mut},titlefont:{color:css("--fg2")}}}}
+const cfg={displaylogo:false,responsive:true};
+let pending=false;function schedule(){if(!pending){pending=true;requestAnimationFrame(()=>{pending=false;render()})}}
+const first={net:true,box:true,cell:true};
+function render(){
+  drawSchematic();
+  const f=prm.r.map(r=>sqrt(r/prm.mu));
+  document.getElementById("resFreq").innerHTML="Resonator alone: "+f.map((v,i)=>`${dot(i)}ω<sub>${AX[i]}</sub> = ${v.toFixed(3)}`).join("&nbsp;&nbsp; ");
+  if(!window.Plotly){document.getElementById("verdict").innerHTML='<p class="hint" style="color:var(--warn)">The plotting library did not load. Reload the page to try again.</p>';return}
+  const A=analyse(),fg=css("--fg"),mut=css("--muted"),line=css("--line"),col=AXC.map(css),rgb=col.map(hexRgb);
+  const lo=A.res.lo,hi=A.res.hi;
+  const gapP=hi.path.w-lo.path.w,gapF=hi.face.w-lo.face.w,gapV=hi.vol.w-lo.vol.w,tol=1e-4;
+  const ok=g=>Math.abs(g-gapV)<tol*Math.max(1,Math.abs(gapV));
+  const gtxt=g=>g>0?g.toFixed(4):"none";
+  const pill=g=>gapV<=0?`<span class="s">bands 3 and 4 overlap</span>`:`<span class="pill ${ok(g)?"ok":"miss"}">${ok(g)?"✓ matches volume":"✕ off by "+pct(g,gapV).toFixed(1)+"%"}</span>`;
+  document.getElementById("verdict").innerHTML=`
+   <div class="cell"><span class="k">Complete gap · 1D path</span><span class="v">${gtxt(gapP)}</span>${pill(gapP)}</div>
+   <div class="cell"><span class="k">Complete gap · 2D faces</span><span class="v">${gtxt(gapF)}</span>${pill(gapF)}</div>
+   <div class="cell"><span class="k">Complete gap · 3D volume</span><span class="v">${gtxt(gapV)}</span>
+     <span class="s">${gapV>0?`from ω = ${lo.vol.w.toFixed(3)} to ${hi.vol.w.toFixed(3)}`:"No complete gap. Try moving the r springs closer together."}</span></div>`;
+  const rowsFor=(label,r)=>[["1D path",r.path],["2D faces",r.face],["3D volume",r.vol]].map(([d,o])=>
+    `<tr><td>${label}</td><td>${d}</td><td class="num">${o.w.toFixed(5)}</td><td class="num">${fmtk(o.k)}</td><td>${where(o.k)}</td><td class="num">${d==="3D volume"?"—":(o.w-r.vol.w>=0?"+":"")+(o.w-r.vol.w).toExponential(2)}</td></tr>`).join("");
+  document.getElementById("tbl").innerHTML=`<thead><tr><th>Gap edge</th><th>Searched over</th><th>ω</th><th>k (π/a)</th><th>Location</th><th>Δ vs volume</th></tr></thead>
+    <tbody>${rowsFor("Top of band 3",lo)}${rowsFor("Bottom of band 4",hi)}</tbody>`;
+
+  // band diagram, coloured by direction of motion
+  const L=baseLayout(),ax=L._axis;delete L._axis;
+  const brk=arr=>{const o=[];A.path.forEach((p,i)=>{if(p.brk)o.push(null);o.push(arr[i])});return o};
+  const xb=brk(A.path.map(p=>p.s)),hb=brk(A.path.map(p=>fmtk(p.k)));
+  const tr=[];
+  for(let b=0;b<6;b++)tr.push({x:A.path.map(p=>p.s),y:A.path.map(p=>p.w[b]),customdata:A.path.map(p=>[fmtk(p.k),polTxt(p.pol[b])]),mode:"markers",
+    marker:{size:3.2,color:A.path.map(p=>polColor(p.pol[b],rgb))},
+    hovertemplate:`Band ${b+1}<br>ω = %{y:.4f}<br>k = %{customdata[0]}<br>%{customdata[1]}<extra></extra>`});
+  const smax=A.ticks[A.ticks.length-1];
+  f.forEach((w,q)=>tr.push({x:[0,smax],y:[w,w],mode:"lines",line:{color:col[q],width:1,dash:"dot"},hovertemplate:`resonance √(r_${AX[q]}/μ) = %{y:.4f}<extra></extra>`}));
+  const shapes=gapV>0?[{type:"rect",xref:"x",yref:"y",x0:0,x1:smax,y0:lo.vol.w,y1:hi.vol.w,fillcolor:css("--gapfill"),line:{width:0},layer:"below"}]:[];
+  Plotly.react("pPath",tr,{...L,shapes,xaxis:{...ax,tickvals:A.ticks,ticktext:A.lab,showgrid:true,range:[0,smax],tickfont:{color:fg,size:11}},
+    yaxis:{...ax,title:{text:"ω"},rangemode:"tozero"}},{...cfg,modeBarButtonsToRemove:["lasso2d","select2d"]});
+
+  // net surfaces
+  const show=document.getElementById("polSel").value;
+  const I=FG.tri.map(t=>t[0]),J=FG.tri.map(t=>t[1]),K=FG.tri.map(t=>t[2]);
+  const kd=FG.pts.map(p=>fmtk(p.k)+"<br>"+FACES[p.face].name);
+  const hide={title:{text:""},showticklabels:false,showgrid:false,zeroline:false,showbackground:false,showspikes:false};
+  const scene={bgcolor:css("--surface"),xaxis:{...ax,...hide},yaxis:{...ax,...hide},
+    zaxis:{...ax,title:{text:"ω"},showbackground:false,showspikes:false},aspectmode:"manual",aspectratio:{x:1.1,y:1.4,z:0.75}};
+  if(first.net)scene.camera={eye:{x:-1.3,y:-1.4,z:1.0}};
+  const nt=[],nx=FG.pts.map(p=>p.n[0]),ny=FG.pts.map(p=>p.n[1]);
+  const edges=[[0,0,1,0],[1,0,1,1],[1,1,0,1],[0,1,0,0]];
+  const shown=show==="all"?[0,1,2,3,4,5]:show==="lo"?[0,1,2]:show==="hi"?[3,4,5]:[+show];
+  const em=[];FACES.forEach(fc=>{for(const[s0,t0,s1,t1]of edges){for(let i=0;i<=24;i++){const u=i/24,s=s0+(s1-s0)*u,t=t0+(t1-t0)*u;
+    em.push({n:fc.n(s,t),w:modes(fc.k(s,t).map(v=>v*P)).w})}em.push(null)}});
+  for(const b of shown){
+    nt.push({type:"mesh3d",x:nx,y:ny,z:A.fw.map(w=>w[b]),i:I,j:J,k:K,vertexcolor:A.fm.map(m=>polColor(m.pol[b],rgb)),opacity:1,
+      lighting:{ambient:0.7,diffuse:0.55,specular:0.05,roughness:0.9},customdata:FG.pts.map((p,i)=>kd[i]+"<br>"+polTxt(A.fm[i].pol[b])),
+      hovertemplate:`Band ${b+1}<br>ω = %{z:.4f}<br>k = %{customdata}<extra></extra>`});
+    nt.push({type:"scatter3d",mode:"lines",x:em.map(e=>e&&e.n[0]),y:em.map(e=>e&&e.n[1]),z:em.map(e=>e&&e.w[b]+0.003),line:{color:fg,width:3},hoverinfo:"skip"})}
+  const labs=new Map();FACES.forEach(fc=>{for(const[s,t]of[[0,0],[1,0],[1,1],[0,1]]){const n=fc.n(s,t);labs.set(n.join(),[n,vname(fc.k(s,t).map(v=>v*P))])}});
+  const lv=[...labs.values()];
+  nt.push({type:"scatter3d",mode:"text",x:lv.map(v=>v[0][0]),y:lv.map(v=>v[0][1]),z:lv.map(()=>0),text:lv.map(v=>v[1]),
+    textfont:{color:fg,size:15,family:"Newsreader, Georgia, serif"},hoverinfo:"skip"});
+  const Ln=baseLayout();delete Ln._axis;
+  Plotly.react("pNet",nt,{...Ln,margin:{l:0,r:0,t:0,b:0},scene,uirevision:"net"},cfg);first.net=false;
+
+  // box in k-space
+  const band=+bandSel.value,sgn=band<3?1:-1;
+  const seq=["--seq0","--seq1","--seq2","--seq3","--seq4"].map((v,i)=>[i/4,css(v)]);
+  const bt=[{type:"mesh3d",x:FG.pts.map(p=>p.k[0]/P),y:FG.pts.map(p=>p.k[1]/P),z:FG.pts.map(p=>p.k[2]/P),i:I,j:J,k:K,
+      intensity:A.fw.map(w=>w[band]),colorscale:seq,opacity:0.55,
+      colorbar:{thickness:10,len:0.7,tickfont:{color:mut,size:10},outlinewidth:0,title:{text:"ω",font:{color:fg}}},
+      lighting:{ambient:0.95,diffuse:0.2},customdata:kd,hovertemplate:`Band ${band+1}<br>ω = %{intensity:.4f}<br>k = %{customdata}<extra></extra>`}];
+  const pe=[[],[],[]];for(const[a,b]of PATH){for(const p of[V[a],V[b],null])for(let c=0;c<3;c++)pe[c].push(p?p[c]/P:null)}
+  bt.push({type:"scatter3d",mode:"lines",x:pe[0],y:pe[1],z:pe[2],line:{color:fg,width:4},hoverinfo:"skip"});
+  const vn=Object.keys(V);
+  bt.push({type:"scatter3d",mode:"text",x:vn.map(n=>V[n][0]/P),y:vn.map(n=>V[n][1]/P),z:vn.map(n=>V[n][2]/P),text:vn,textposition:"top center",
+    textfont:{color:fg,size:15,family:"Newsreader, Georgia, serif"},hoverinfo:"skip"});
+  const jv=extremum(A.vw,band,sgn),rv=refine(VOL[jv],band,sgn);
+  bt.push({type:"scatter3d",mode:"markers",x:[rv.k[0]/P],y:[rv.k[1]/P],z:[rv.k[2]/P],marker:{size:7,color:css("--seq3"),line:{color:fg,width:2}},
+    hovertemplate:`Band ${band+1} ${sgn>0?"max":"min"} (volume)<br>ω = ${rv.w.toFixed(5)}<br>k = ${fmtk(rv.k)}<br>${where(rv.k)}<extra></extra>`});
+  const bs={bgcolor:css("--surface"),aspectmode:"cube"};
+  for(const[a,l]of[["xaxis","kx"],["yaxis","ky"],["zaxis","kz"]])bs[a]={...ax,title:{text:l+" (π/a)"},range:[-0.05,1.1],showbackground:false,showspikes:false,dtick:0.5};
+  if(first.box)bs.camera={eye:{x:1.6,y:-1.4,z:0.9}};
+  const Lb=baseLayout();delete Lb._axis;
+  Plotly.react("pBox",bt,{...Lb,margin:{l:0,r:0,t:0,b:0},scene:bs,uirevision:"box"},cfg);first.box=false;
+
+  drawCell();
+}
+
+// ---- unit cell: 2D cut ----
+function zig(x1,y1,x2,y2,n,amp){const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L,lead=L*0.15,pts=[[x1,y1],[x1+ux*lead,y1+uy*lead]];
+  for(let i=1;i<2*n;i++){const s=lead+(L-2*lead)*i/(2*n),o=(i%2?1:-1)*amp;pts.push([x1+ux*s-uy*o,y1+uy*s+ux*o])}
+  pts.push([x2-ux*lead,y2-uy*lead],[x2,y2]);return pts.map(p=>p.map(v=>v.toFixed(1)).join(",")).join(" ")}
+function drawSchematic(){const w=c=>(1.2+3.5*c/Math.max(...prm.k,...prm.r,prm.g)).toFixed(2);
+  const cx=210,cy=150,h=52,cr=15;
+  let s=`<rect x="0" y="${cy-h}" width="40" height="${2*h}" rx="6" fill="var(--hostfill)" stroke="var(--line)"/>
+  <rect x="380" y="${cy-h}" width="40" height="${2*h}" rx="6" fill="var(--hostfill)" stroke="var(--line)"/>
+  <rect x="${cx-h}" y="0" width="${2*h}" height="22" rx="6" fill="var(--hostfill)" stroke="var(--line)"/>
+  <rect x="${cx-h}" y="278" width="${2*h}" height="22" rx="6" fill="var(--hostfill)" stroke="var(--line)"/>`;
+  s+=`<g fill="none" stroke-linejoin="round">
+   <polyline points="${zig(40,cy,cx-h,cy,6,8)}" stroke="var(--sx)" stroke-width="${w(prm.k[0])}"/>
+   <polyline points="${zig(cx+h,cy,380,cy,6,8)}" stroke="var(--sx)" stroke-width="${w(prm.k[0])}"/>
+   <polyline points="${zig(cx,22,cx,cy-h,4,8)}" stroke="var(--sy)" stroke-width="${w(prm.k[1])}"/>
+   <polyline points="${zig(cx,cy+h,cx,278,4,8)}" stroke="var(--sy)" stroke-width="${w(prm.k[1])}"/></g>`;
+  if(prm.g>0){const gw=w(prm.g);
+    for(const[x0,y0,x1,y1]of[[cx-h,cy-h,30,16],[cx+h,cy-h,390,16],[cx-h,cy+h,30,284],[cx+h,cy+h,390,284]])
+      s+=`<polyline points="${zig(x0,y0,x1,y1,5,6)}" fill="none" stroke="var(--sd)" stroke-width="${gw}" stroke-linejoin="round"/><rect x="${x1-14}" y="${y1-12}" width="28" height="24" rx="5" fill="var(--hostfill)" stroke="var(--line)"/>`;
+    s+=`<text x="${cx+h+30}" y="${cy-h-6}" fill="var(--fg2)" font-family="JetBrains Mono, monospace" font-size="11">g = ${prm.g.toFixed(2)}</text>`}
+  s+=`<rect x="${cx-h}" y="${cy-h}" width="${2*h}" height="${2*h}" rx="8" fill="var(--hostfill)" stroke="var(--fg)" stroke-width="2"/>`;
+  s+=`<g fill="none" stroke-linejoin="round">
+   <polyline points="${zig(cx-h,cy,cx-cr,cy,3,5)}" stroke="var(--sx)" stroke-width="${w(prm.r[0])}"/>
+   <polyline points="${zig(cx+cr,cy,cx+h,cy,3,5)}" stroke="var(--sx)" stroke-width="${w(prm.r[0])}"/>
+   <polyline points="${zig(cx,cy-h,cx,cy-cr,3,5)}" stroke="var(--sy)" stroke-width="${w(prm.r[1])}"/>
+   <polyline points="${zig(cx,cy+cr,cx,cy+h,3,5)}" stroke="var(--sy)" stroke-width="${w(prm.r[1])}"/></g>
+  <circle cx="${cx}" cy="${cy}" r="${cr}" fill="var(--core)"/>`;
+  const t=(x,y,txt,anchor="start",c="var(--fg2)")=>`<text x="${x}" y="${y}" text-anchor="${anchor}" fill="${c}" font-family="JetBrains Mono, monospace" font-size="11">${txt}</text>`;
+  s+=t(100,cy-14,`k_x = ${prm.k[0].toFixed(2)}`,"middle")+t(cx+10,64,`k_y = ${prm.k[1].toFixed(2)}`)
+    +t(cx-h+4,cy-h+14,"m₁","start","var(--fg)")+t(cx+cr+4,cy-10,`μ = ${prm.mu.toFixed(2)}`,"start","var(--fg)")
+    +t(cx-h+4,cy+h-8,`r_x ${prm.r[0].toFixed(2)}`)+t(cx+6,cy+cr+24,`r_y ${prm.r[1].toFixed(2)}`)
+    +t(20,cy+h+16,"neighbour","middle","var(--muted)")+t(400,cy+h+16,"neighbour","middle","var(--muted)")
+    +`<text x="410" y="292" text-anchor="end" fill="var(--muted)" font-family="Public Sans, sans-serif" font-size="10">x–y cut · k_z, r_z point out of the page</text>`;
+  document.getElementById("schem").innerHTML=s}
+
+// ---- unit cell: 3D ----
+function coil(p0,p1,trim0,trim1,turns,amp){const d=p1.map((v,i)=>v-p0[i]),L=sqrt(d[0]**2+d[1]**2+d[2]**2),e=d.map(v=>v/L);
+  let u=Math.abs(e[0])<0.9?[1,0,0]:[0,1,0];const dt=u[0]*e[0]+u[1]*e[1]+u[2]*e[2];u=u.map((v,i)=>v-dt*e[i]);
+  const un=sqrt(u[0]**2+u[1]**2+u[2]**2);u=u.map(v=>v/un);const v=[e[1]*u[2]-e[2]*u[1],e[2]*u[0]-e[0]*u[2],e[0]*u[1]-e[1]*u[0]];
+  const a=trim0,b=L-trim1,lead=0.12*(b-a),N=turns*10,pts=[p0.map((q,i)=>q+e[i]*a)];
+  for(let n=0;n<=N;n++){const t=n/N,s=a+lead+t*(b-a-2*lead),ph=2*P*turns*t;
+    pts.push(p0.map((q,i)=>q+e[i]*s+amp*(Math.cos(ph)*u[i]+Math.sin(ph)*v[i])))}
+  pts.push(p0.map((q,i)=>q+e[i]*b));return pts}
+function boxMesh(c,h,color,opacity,name,show){const x=[],y=[],z=[];
+  for(const sx of[-1,1])for(const sy of[-1,1])for(const sz of[-1,1]){x.push(c[0]+sx*h);y.push(c[1]+sy*h);z.push(c[2]+sz*h)}
+  return{type:"mesh3d",x,y,z,alphahull:0,color,opacity,flatshading:true,name,showlegend:show,hoverinfo:"name",lighting:{ambient:0.8,diffuse:0.4}}}
+function drawCell(){const fg=css("--fg"),tr=[],H=0.24,maxc=Math.max(...prm.k,...prm.r,prm.g);
+  const sites=[[0,0,0]];for(let i=0;i<3;i++)for(const s of[1,-1]){const p=[0,0,0];p[i]=s;sites.push(p)}
+  const pushCoils=(segs,color,c,name,turns,amp)=>{const xs=[],ys=[],zs=[];
+    for(const[p0,p1,t0,t1]of segs){for(const p of coil(p0,p1,t0,t1,turns,amp)){xs.push(p[0]);ys.push(p[1]);zs.push(p[2])}xs.push(null);ys.push(null);zs.push(null)}
+    tr.push({type:"scatter3d",mode:"lines",x:xs,y:ys,z:zs,name,showlegend:true,hoverinfo:"name",line:{color,width:1.5+6*c/maxc}})};
+  for(let i=0;i<3;i++){const u=[0,0,0];u[i]=1;const m=u.map(q=>-q);
+    pushCoils([[[0,0,0],u,H,H],[[0,0,0],m,H,H]],css(AXC[i]),prm.k[i],`host spring k_${AX[i]} = ${prm.k[i].toFixed(2)}`,5,0.06);
+    pushCoils([[[0,0,0],u.map(q=>q*H),0.06,0],[[0,0,0],m.map(q=>q*H),0.06,0]],css(AXC[i]),prm.r[i],`resonator spring r_${AX[i]} = ${prm.r[i].toFixed(2)}`,3,0.025)}
+  if(prm.g>0){const segs=[];for(const{d}of DIAG)for(const sg of[1,-1]){const p=d.map(q=>q*sg);sites.push(p);segs.push([[0,0,0],p,H*1.3,H*1.3])}
+    pushCoils(segs,css("--sd"),prm.g,`diagonal spring g = ${prm.g.toFixed(2)}`,5,0.045)}
+  sites.forEach((c,i)=>tr.push(boxMesh(c,H,css("--hostfill"),i?(i>6?0.18:0.35):0.22,"host mass m₁ = 1",i===0)));
+  tr.push({type:"scatter3d",mode:"markers",x:sites.map(p=>p[0]),y:sites.map(p=>p[1]),z:sites.map(p=>p[2]),name:`resonator μ = ${prm.mu.toFixed(2)}`,showlegend:true,
+    marker:{size:sites.map((_,i)=>i?5:9),color:css("--core")},hovertemplate:`resonator μ = ${prm.mu.toFixed(2)}<extra></extra>`});
+  const ax=baseLayout()._axis,sc={bgcolor:css("--surface"),aspectmode:"cube"};
+  for(const[a,l]of[["xaxis","x / a"],["yaxis","y / a"],["zaxis","z / a"]])sc[a]={...ax,title:{text:l},range:[-1.3,1.3],dtick:1,showbackground:false,showspikes:false};
+  if(first.cell)sc.camera={eye:{x:1.45,y:-1.3,z:0.85}};
+  const Lc=baseLayout();delete Lc._axis;
+  Plotly.react("pCell",tr,{...Lc,margin:{l:0,r:0,t:0,b:0},scene:sc,uirevision:"cell",showlegend:true,
+    legend:{x:0,y:1,bgcolor:"rgba(0,0,0,0)",font:{color:css("--fg2"),size:11}}},cfg);first.cell=false}
+
+document.getElementById("bandSel").addEventListener("change",schedule);
+document.getElementById("polSel").addEventListener("change",schedule);
+try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",schedule)}catch(e){}
+new MutationObserver(schedule).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+loadPreset(PRESETS[0]);
+</script>

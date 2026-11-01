@@ -1,0 +1,10 @@
+{
+  "comment": "Sanity check after Liu et al., Science 289 (2000): lead sphere r = 5 mm, silicone coating 2.5 mm, epoxy, simple cubic a = 15.5 mm.",
+  "a": [0.0155, 0.0155, 0.0155],
+  "grid": [16, 16, 16],
+  "background": "epoxy",
+  "shapes": [
+    {"material": "silicone", "semi_axes": [0.0075, 0.0075, 0.0075]},
+    {"material": "lead", "semi_axes": [0.005, 0.005, 0.005]}
+  ]
+}

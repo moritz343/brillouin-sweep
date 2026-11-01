@@ -1,0 +1,8 @@
+# Python environment and caches
+.venv/
+__pycache__/
+*.pyc
+
+# sweep outputs (large; keep results elsewhere or add selected ones explicitly)
+*.csv
+!cells/*.csv

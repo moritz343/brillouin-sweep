@@ -1,0 +1,10 @@
+{
+  "comment": "Locally resonant cell: ellipsoidal lead core in a silicone coating, in epoxy. Unequal semi-axes give three different resonances (orthorhombic, Laue class mmm).",
+  "a": [0.0155, 0.0155, 0.0155],
+  "grid": [16, 16, 16],
+  "background": "epoxy",
+  "shapes": [
+    {"material": "silicone", "semi_axes": [0.0072, 0.0068, 0.0064]},
+    {"material": "lead", "semi_axes": [0.0056, 0.0048, 0.0040]}
+  ]
+}
