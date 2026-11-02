@@ -20,7 +20,7 @@ esac
 cell="$(realpath "$2")"; kpts="$(realpath "$3")"; shift 3
 mkdir -p "$out"
 systemd-run --user --unit="$unit" --collect \
-  -p MemoryMax="${MEMMAX:-1500M}" -p Nice=10 \
+  -p MemoryMax="${MEMMAX:-1500M}" -p MemorySwapMax="${SWAPMAX:-512M}" -p Nice=10 \
   -p StandardOutput="append:$out/log.txt" -p StandardError="append:$out/log.txt" \
   --setenv=MKL_NUM_THREADS="${THREADS:-2}" --setenv=OMP_NUM_THREADS=1 \
   --working-directory="$out" \

@@ -150,7 +150,12 @@ class Cell:
             solver.set_phase(33)
             op = LinearOperator(R.shape, dtype=float,
                                 matvec=lambda x: solver._call_pardiso(S, np.ascontiguousarray(x, dtype=float)).ravel())
-            w2, Z = eigsh(R, k=2 * nev, sigma=self.sigma, OPinv=op, which="LM")
+            try:
+                w2, Z = eigsh(R, k=2 * nev, sigma=self.sigma, OPinv=op, which="LM")
+            finally:
+                # PARDISO keeps its factorization in MKL-internal memory that is
+                # not garbage-collected: without this, ~0.5 GB leaks per k-point.
+                solver.free_memory(everything=True)
             o = np.argsort(w2)[::2]
             w2, Z = w2[o], Z[:, o]
             Y = Z[: self.ndof] + 1j * Z[self.ndof:]
