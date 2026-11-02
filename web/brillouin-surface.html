@@ -222,6 +222,32 @@ select{font:13px var(--body);color:var(--fg);background:var(--surface);border:1p
       <p><b>How often, and how much.</b> In 164 random symmetry-broken cells with a gap, the lower gap edge lay inside a face in 26 %. The faces gave the correct gap every time, so no case needed the volume. How large the error is depends on the resonators. When the resonator springs are softer than the host, the resonance flattens the bands below the gap and the difference shrinks to about 0.1 % of the frequency. When the resonator springs are stiff, as in this example, band 3 is an ordinary host wave and keeps its bulge. Here the path overestimates the gap by about 16 %.</p>
       <p><b>Caveat.</b> The "path" here is the 12 edges of the irreducible box. For a real monoclinic or triclinic crystal, the standard path of Setyawan &amp; Curtarolo is different, and the comparison should be repeated with it. The mechanism matches the 2D finding of Maurin et al. (2018) that the contour fails mainly for low-symmetry cells.</p>
     </div>
+    <div class="panel prose" id="classify">
+      <h2>Which symmetries make the faces enough?</h2>
+      <p><b>What symmetry guarantees.</b> Two facts hold for every band. First, time reversal gives ω(k) = ω(−k). At the eight points where k and −k are the same point of the zone (the corners of the box), the gradient of every band is zero, so these are always critical points. Second, on a mirror plane in k-space the derivative perpendicular to the plane is zero. A band restricted to that plane then needs only two more conditions to have a critical point there, and on a two-fold or higher rotation axis only one. On a face of the irreducible zone that is <i>not</i> a mirror plane, nothing is zero by symmetry. A maximum would have to land there by coincidence, so in practice it does not. Maxima therefore sit at the corners, on symmetry lines, on mirror planes, or in general position inside the volume.</p>
+      <p><b>The test.</b> Three versions of the spring model, from full to no mirror symmetry, each with random parameters:</p>
+      <div class="tablewrap"><table aria-label="Where the band-3 maximum sits for three symmetry classes">
+        <thead><tr><th>Cell</th><th>Laue class</th><th>IBZ faces that are mirror planes</th><th>Max. on a non-mirror face</th><th>Max. inside the volume</th><th>Faces wrong by &gt; 1 %</th></tr></thead>
+        <tbody>
+          <tr><td>All six ⟨110⟩ pairs (top of page)</td><td class="num">mmm</td><td>all 6</td><td>–</td><td>only in a narrow window (3D case above)</td><td class="num">0 of 206</td></tr>
+          <tr><td>Only (1,1,0)</td><td class="num">2/m</td><td>2 of 6 (k<sub>z</sub> = 0, π)</td><td class="num">0 of 311</td><td class="num">0 of 311</td><td class="num">0 of 311</td></tr>
+          <tr><td>Only (1,1,0), (0,1,1), (1,0,1)</td><td class="num">−1</td><td>none</td><td>–</td><td class="num">108 of 195</td><td class="num">47 of 195 (up to 92 %)</td></tr>
+        </tbody></table></div>
+      <p>In the monoclinic cell every maximum that left the path landed on one of the two mirror faces. None ever sat on the four faces that are not mirror planes. In the triclinic cell no face is a mirror plane, and more than half of the maxima sit inside the volume. So breaking symmetry does not automatically defeat the faces. What matters is whether the faces of the irreducible zone are still mirror planes.</p>
+      <p><b>A rule of thumb by Laue class</b> (for primitive lattices):</p>
+      <div class="tablewrap"><table aria-label="Which IBZ faces are mirror planes, by Laue class">
+        <thead><tr><th>Laue class</th><th>System</th><th>IBZ faces in mirror planes</th><th>What to sample</th></tr></thead>
+        <tbody>
+          <tr><td class="num">−1</td><td>triclinic</td><td>none</td><td>the volume</td></tr>
+          <tr><td class="num">−3</td><td>trigonal</td><td>none</td><td>the volume</td></tr>
+          <tr><td class="num">2/m</td><td>monoclinic</td><td>the two faces perpendicular to the unique axis</td><td>those faces + the volume</td></tr>
+          <tr><td class="num">4/m, 6/m</td><td>tetragonal, hexagonal</td><td>the two faces perpendicular to the main axis</td><td>those faces + the volume</td></tr>
+          <tr><td class="num">−3m, m−3</td><td>trigonal, cubic</td><td>some of them</td><td>the mirror faces + the volume</td></tr>
+          <tr><td class="num">mmm, 4/mmm, 6/mmm, m−3m</td><td>orthorhombic, tetragonal, hexagonal, cubic</td><td>all</td><td>the faces (the volume only by accident)</td></tr>
+        </tbody></table></div>
+      <p>The last row are the Laue classes generated entirely by mirrors. Their irreducible zone is bounded only by mirror planes, so the "natural homes" of band extrema are exactly its faces, edges and corners. For centred lattices (face-centred, body-centred and so on), part of the zone boundary is not a mirror plane even in these classes and has to be checked case by case.</p>
+      <p><b>What this does not prove.</b> Symmetry only says where the gradient has to vanish. It never forbids an extra critical point in general position. The 3D case above is such an accident in an mmm cell: nearly equal springs put the maximum close to the body diagonal, which is a symmetry axis only for exactly cubic springs. The table is evidence from one family of spring models, not a theorem, and it should be repeated with FEM cells of each class.</p>
+    </div>
   </section>
 
   <section class="fem" id="fem">
