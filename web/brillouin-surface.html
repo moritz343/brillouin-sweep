@@ -176,7 +176,8 @@ select{font:13px var(--body);color:var(--fg);background:var(--surface);border:1p
     </header>
     <div class="panel sbctl">
       <div class="row"><label for="sbG"><i class="dot" style="background:var(--sd)"></i>g</label><input type="range" id="sbG" min="0" max="2.5" step="0.05"><output id="sbGo" for="sbG"></output></div>
-      <div class="presets"><button type="button" id="sbReset">Reset to the example</button></div>
+      <div class="presets"><button type="button" id="sbPreEx" aria-pressed="true">Both cells have a gap</button><button type="button" id="sbPreStrong" aria-pressed="false">Strongest dome</button>
+        <label class="hint" style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" id="sbB4" checked> show band 4</label></div>
       <p class="hint" id="sbParams"></p>
     </div>
     <div class="sbgrid">
@@ -193,7 +194,7 @@ select{font:13px var(--body);color:var(--fg);background:var(--surface);border:1p
         <p class="readout"></p>
       </div>
     </div>
-    <p class="hint">Each plot shows the dispersion surfaces over the face that contains the maximum of band 3: band 3 below the gap in colour, band 4 above it in grey. The black line is the part of the standard path on that face, drawn on band 3. The orange plane sits at the height of the highest point the path finds (○). In the symmetric cell nothing rises above it. In the symmetry-broken cell a dome pushes through the plane in the middle of the face, up to the true maximum ●, which narrows the real gap. Drag to rotate.</p>
+    <p class="hint">Each plot shows the dispersion surfaces over the face that contains the maximum of band 3: band 3 below the gap in colour, band 4 above it in grey. The black line is the part of the standard path on that face, drawn on band 3. The orange plane sits at the height of the highest point the path finds (○), and every part of band 3 above it is coloured orange: that is what the path misses. In the symmetric cell nothing rises above it. In the symmetry-broken cell a dome pushes through the plane in the middle of the face, up to the true maximum ●, which narrows the real gap. Drag to rotate.</p>
     <div class="panel prose">
       <h2>Why the faces are needed here</h2>
       <p><b>Symmetric cell: the corners always win.</b> Every entry of the dynamical matrix is built from cos k<sub>x</sub>, cos k<sub>y</sub> and cos k<sub>z</sub>, and is linear in each of them separately. The two mirror-image diagonal springs enter as a pair, and cos(k<sub>x</sub>+k<sub>y</sub>) + cos(k<sub>x</sub>−k<sub>y</sub>) = 2 cos k<sub>x</sub> cos k<sub>y</sub>, which keeps that structure. Without diagonal springs, each band depends monotonically on one such function, and a function that is linear in each coordinate has its extremes at the corners of a box. So the gap edges sit on the path. With diagonal springs this is no longer a proof, but in 206 random symmetric cells with a gap, both edges were at a corner every time.</p>
@@ -643,6 +644,8 @@ first.fem=true;
 
 // ---- symmetric vs symmetry-broken cell (both xy diagonals vs only (1,1,0)) ----
 const SB_EX={k:[0.8,1.3,0.6],r:[10,2.5,8],mu:0.6,s:0.6,g:1.6};
+// found by optimising the height of the interior maximum above the path's, with a gap of at least 5 %
+const SB_STRONG={k:[0.3,1.7,0.1],r:[25,0.7,20],mu:2,s:0.15,g:0.8};
 let sbp={...SB_EX,k:[...SB_EX.k],r:[...SB_EX.r]};
 function sbBands(k,q,sym){const D=[[0,0,0],[0,0,0],[0,0,0]];
   for(let i=0;i<3;i++){const c=1-cos(k[i]);for(let a=0;a<3;a++)D[a][a]+=2*(i===a?q.k[i]:q.s*q.k[i])*c}
@@ -697,13 +700,17 @@ function sbRenderCell(id,sym){
   // perimeter of the face = the part of the standard path on it, drawn on the band-3 sheet
   const per=[];const nx=X.length-1,ny=Y.length-1;
   for(let i=0;i<=nx;i++)per.push([i,0]);for(let j=0;j<=ny;j++)per.push([nx,j]);for(let i=nx;i>=0;i--)per.push([i,ny]);for(let j=ny;j>=0;j--)per.push([0,j]);
+  // colour band 3 blue up to the highest point of the path, orange above it (the part the path misses)
+  const zlo=Math.min(...z3.flat()),zhi=Math.max(...z3.flat()),tcut=Math.min(1,Math.max(0,(R.path.lo.v+1e-9-zlo)/(zhi-zlo||1)));
+  const warn=css("--warn"),cs3=tcut>=1?seq:[[0,css("--seq0")],[tcut*0.5,css("--seq1")],[tcut*0.85,css("--seq2")],[tcut,css("--seq3")],[Math.min(1,tcut+1e-4),warn],[1,warn]];
   const tr=[
-    {type:"surface",x:X,y:Y,z:z3,colorscale:seq,showscale:false,lighting:{ambient:0.75,diffuse:0.5,specular:0.05},hovertemplate:hov(3),
-      contours:{z:{show:true,color:css("--surface"),width:1,start:Math.min(...z3.flat()),end:Math.max(...z3.flat()),size:(Math.max(...z3.flat())-Math.min(...z3.flat()))/12}}},
-    {type:"surface",x:X,y:Y,z:z4,colorscale:[[0,mut],[1,mut]],showscale:false,opacity:0.35,hovertemplate:hov(4)},
+    {type:"surface",x:X,y:Y,z:z3,surfacecolor:z3,cmin:zlo,cmax:zhi,colorscale:cs3,showscale:false,lighting:{ambient:0.75,diffuse:0.5,specular:0.05},hovertemplate:hov(3),
+      contours:{z:{show:true,color:css("--surface"),width:1,start:zlo,end:zhi,size:(zhi-zlo)/12}}}];
+  if(document.getElementById("sbB4").checked)tr.push({type:"surface",x:X,y:Y,z:z4,colorscale:[[0,mut],[1,mut]],showscale:false,opacity:0.35,hovertemplate:hov(4)});
+  tr.push(
     {type:"surface",x:[X[0],X[nx]],y:[Y[0],Y[ny]],z:[[R.path.lo.v,R.path.lo.v],[R.path.lo.v,R.path.lo.v]],colorscale:[[0,css("--warn")],[1,css("--warn")]],
       showscale:false,opacity:0.28,hovertemplate:`level of the highest point on the path: ω = ${R.path.lo.v.toFixed(4)}<extra></extra>`},
-    {type:"scatter3d",mode:"lines",x:per.map(([i])=>X[i]),y:per.map(([,j])=>Y[j]),z:per.map(([i,j])=>z3[j][i]),line:{color:fg,width:6},hoverinfo:"skip"}];
+    {type:"scatter3d",mode:"lines",x:per.map(([i])=>X[i]),y:per.map(([,j])=>Y[j]),z:per.map(([i,j])=>z3[j][i]),line:{color:fg,width:6},hoverinfo:"skip"});
   if(onFace(R.path.lo.k))tr.push({type:"scatter3d",mode:"markers",x:[R.path.lo.k[o[0]]/P],y:[R.path.lo.k[o[1]]/P],z:[R.path.lo.v],
     marker:{size:7,symbol:"circle-open",color:css("--warn"),line:{width:4}},hovertemplate:`highest point on the path<br>ω = ${R.path.lo.v.toFixed(4)}<extra></extra>`});
   if(onFace(km))tr.push({type:"scatter3d",mode:"markers",x:[km[o[0]]/P],y:[km[o[1]]/P],z:[R.vol.lo.v],
@@ -721,11 +728,14 @@ function sbRenderCell(id,sym){
 function renderSB(){
   if(!window.Plotly)return;
   document.getElementById("sbG").value=sbp.g;document.getElementById("sbGo").textContent=sbp.g.toFixed(2);
-  document.getElementById("sbParams").innerHTML=`Fixed: host springs k = (${sbp.k.join(", ")}), shear ratio s = ${sbp.s}, resonator springs r = (${sbp.r.join(", ")}), μ = ${sbp.mu}. The resonator springs are stiff on purpose: then band 3 is an ordinary host wave and keeps its shape, while soft resonators would flatten it. Move g to watch the maximum leave the corner once the diagonal spring is strong enough.`;
+  document.getElementById("sbParams").innerHTML=`Fixed: host springs k = (${sbp.k.join(", ")}), shear ratio s = ${sbp.s}, resonator springs r = (${sbp.r.join(", ")}), μ = ${sbp.mu}. The resonator springs are stiff on purpose: then band 3 is an ordinary host wave and keeps its shape, while soft resonators would flatten it. "Strongest dome" was found by optimising the height of the interior maximum above the path maximum. There the symmetric cell has no gap at all, because the extra mirror spring lifts band 3. Analytically, for k<sub>x</sub> = k<sub>y</sub> the dome of the (1,1,0) wave is highest at g ≈ (1+s)k/2. Move g to watch the maximum leave the corner once the diagonal spring is strong enough.`;
   sbRenderCell("sbSym",true);sbRenderCell("sbAsym",false)}
 let sbPending=false;const sbSchedule=()=>{if(!sbPending){sbPending=true;requestAnimationFrame(()=>{sbPending=false;renderSB()})}};
 document.getElementById("sbG").addEventListener("input",e=>{sbp.g=+e.target.value;document.getElementById("sbGo").textContent=sbp.g.toFixed(2);sbSchedule()});
-document.getElementById("sbReset").addEventListener("click",()=>{sbp={...SB_EX,k:[...SB_EX.k],r:[...SB_EX.r]};sbSchedule()});
+const sbPreset=(q,id)=>{sbp={...q,k:[...q.k],r:[...q.r]};for(const b of["sbPreEx","sbPreStrong"])document.getElementById(b).setAttribute("aria-pressed",String(b===id));sbSchedule()};
+document.getElementById("sbPreEx").addEventListener("click",()=>sbPreset(SB_EX,"sbPreEx"));
+document.getElementById("sbPreStrong").addEventListener("click",()=>sbPreset(SB_STRONG,"sbPreStrong"));
+document.getElementById("sbB4").addEventListener("change",sbSchedule);
 
 // ---- polar sweep: rays from Γ along the faces A (k_z = 0), C (k_y = k_z), D (k_x = k_y) ----
 // k: (ux,uy,uz) in π/a; f, p as in FEM (null where not computed); rays: [face, dir, angle°, step, id]
