@@ -207,11 +207,14 @@ select{font:13px var(--body);color:var(--fg);background:var(--surface);border:1p
       <div class="sbcells"></div>
       <div class="sbgrid">
         <div><div class="plot sbcell"></div><p class="hint">Unit cell: axial springs to the six nearest neighbours, diagonal springs to all twelve ⟨110⟩ neighbours, and the resonator inside.</p></div>
+        <div><div class="plot sbplot"></div><p class="hint">The six faces unfolded, as in the net at the top of the page: bands 3 and 4, coloured by direction of motion, with the path in black and the grey plane at the path maximum. Nothing on the faces reaches the true maximum.</p></div>
+      </div>
+      <div class="sbgrid">
         <div><div class="plot sbbox"></div><p class="hint">The irreducible box in k-space. Black: its 12 edges, the standard path. Orange: the region inside the box where band 3 is higher than anywhere on the six faces. It lies in the interior, off every face and edge. ● true maximum, ○ highest point on the faces. Drag to rotate.</p></div>
       </div>
       <p class="readout"></p>
     </div>
-    <p class="hint">Each plot shows the dispersion surfaces over the face that contains the maximum of band 3: band 3 below the gap in colour, band 4 above it in grey. The black line is the part of the standard path on that face, drawn on band 3. The orange plane sits at the height of the highest point the path finds (○), and every part of band 3 above it is coloured orange: that is what the path misses. In the symmetric cell nothing rises above it. In the symmetry-broken cell a dome pushes through the plane in the middle of the face, up to the true maximum ●, which narrows the real gap. Drag to rotate.</p>
+    <p class="hint">Each plot is the unfolded net of all six faces of the irreducible box, as at the top of the page: band 3 (below the gap) and band 4 (above it) as sheets, coloured by direction of motion. The black lines are the 12 box edges, the standard path. Band 4 is drawn see-through. The grey plane sits at the height of the highest point the path finds (○). In the symmetric cell nothing on the faces rises above it. In the symmetry-broken cell, whose net is twice as wide because k<sub>x</sub> runs from −π to π (primes mark k<sub>x</sub> = −π), band 3 pushes through the plane in the middle of a face, up to the true maximum ●. Drag to rotate.</p>
     <div class="panel prose">
       <h2>Why the faces are needed here</h2>
       <p><b>Symmetric cell: the corners usually win.</b> Every diagonal entry of the dynamical matrix is built from cos k<sub>x</sub>, cos k<sub>y</sub> and cos k<sub>z</sub>, and is linear in each of them separately. The two mirror-image diagonal springs enter as a pair, and cos(k<sub>x</sub>+k<sub>y</sub>) + cos(k<sub>x</sub>−k<sub>y</sub>) = 2 cos k<sub>x</sub> cos k<sub>y</sub>, which keeps that structure. Without diagonal springs the directions of motion are independent, each band depends monotonically on one such function, and a function that is linear in each coordinate has its extremes at the corners of a box. So the gap edges sit on the path, and that part is a proof. Diagonal springs also couple the directions of motion, through terms like 2g sin k<sub>x</sub> sin k<sub>y</sub>, and then the proof no longer holds. In 206 random symmetric cells with a gap, both edges were at a corner every time. There is an exception, though: in a narrow window (nearly equal springs, s ≈ 0.6, g ≈ k/2) all three directions mix along the body diagonal and the top of the band moves inside the zone. For k = (1, 1, 1) it sits on Γ R at 0.685 π/a, 2.2 % above anything on the faces (on the path of a cubic lattice, but inside the volume of this box). For k = (1, 0.8, 0.6) it sits at (0.72, 0.66, 0.54) π/a, 0.4 % above the faces, so here even the faces miss it.</p>
@@ -666,13 +669,15 @@ const SB_EX={k:[0.8,1.3,0.6],r:[10,2.5,8],mu:0.6,s:0.6,g:1.6};
 // found by optimising the height of the interior maximum above the path's, with a gap of at least 5 %
 const SB_STRONG={k:[0.3,1.7,0.1],r:[25,0.7,20],mu:2,s:0.15,g:0.8};
 let sbp={...SB_EX,k:[...SB_EX.k],r:[...SB_EX.r]};
-function sbBands(k,q,sym){const D=[[0,0,0],[0,0,0],[0,0,0]];
+function sbModes(k,q,sym){const D=[[0,0,0],[0,0,0],[0,0,0]];
   for(let i=0;i<3;i++){const c=1-cos(k[i]);for(let a=0;a<3;a++)D[a][a]+=2*(i===a?q.k[i]:q.s*q.k[i])*c}
   for(const d of sym==="all"?DIAG.map(o=>o.d):sym?[[1,1,0],[1,-1,0]]:[[1,1,0]]){const c=2*q.g*(1-cos(d[0]*k[0]+d[1]*k[1]+d[2]*k[2])),n=d.map(v=>v/Math.SQRT2);
     for(let a=0;a<3;a++)for(let b=0;b<3;b++)D[a][b]+=c*n[a]*n[b]}
   const sm=sqrt(q.mu),K=[...Array(6)].map(()=>Array(6).fill(0));
   for(let a=0;a<3;a++){for(let b=0;b<3;b++)K[a][b]=D[a][b];const r=q.r[a];K[a][a]+=r;K[a][a+3]=K[a+3][a]=-r/sm;K[a+3][a+3]=r/q.mu}
-  return eigSym(K).w.map(v=>sqrt(Math.max(v,0))).sort((a,b)=>a-b)}
+  const{w,V:E}=eigSym(K),idx=w.map((_,i)=>i).sort((a,b)=>w[a]-w[b]);
+  return{w:idx.map(i=>sqrt(Math.max(w[i],0))),pol:idx.map(i=>{const f=[0,1,2].map(a=>E[a][i]**2+E[a+3][i]**2),t=f[0]+f[1]+f[2];return f.map(v=>v/t)})}}
+const sbBands=(k,q,sym)=>sbModes(k,q,sym).w;
 function sbClimb(f,k0,free,lo,hi,sgn){let k=[...k0],v=sgn*f(k),h=P/16;
   while(h>1e-6){let moved=false;
     for(const c of free)for(const s of[1,-1]){const t=[...k];t[c]=Math.min(hi[c],Math.max(lo[c],t[c]+s*h));if(t[c]===k[c])continue;
@@ -696,6 +701,57 @@ function sbAnalyse(sym,q=sbp){
   for(const[a,b]of[["faces","path"],["vol","faces"]]){if(R[b].lo.v>R[a].lo.v)R[a].lo=R[b].lo;if(R[b].hi.v<R[a].hi.v)R[a].hi=R[b].hi}
   for(const d in R)R[d].gap=R[d].hi.v-R[d].lo.v;
   return{R,lo,hi,B,wide}}
+// Unfolded net of the six faces of an IBZ box [lo, hi], like the net at the top of the page:
+// k_z = lo face in the middle, the other five folded out around it. Bands 3 and 4 as sheets,
+// coloured by direction of motion; black lines = the 12 box edges (the path); orange plane = path maximum.
+function sbNet(el,A,R,q,sym,shown=[2,3]){
+  const lo=A.lo,hi=A.hi,Ls=[0,1,2].map(i=>(hi[i]-lo[i])/P),fg=css("--fg"),rgb=AXC.map(css).map(hexRgb);
+  const FN=[
+    {k:(s,t)=>[s,t,0],n:(s,t)=>[s*Ls[0],t*Ls[1]],d:[0,1]},
+    {k:(s,t)=>[s,0,t],n:(s,t)=>[s*Ls[0],-t*Ls[2]],d:[0,2]},
+    {k:(s,t)=>[0,s,t],n:(s,t)=>[-t*Ls[2],s*Ls[1]],d:[1,2]},
+    {k:(s,t)=>[1,s,t],n:(s,t)=>[Ls[0]+t*Ls[2],s*Ls[1]],d:[1,2]},
+    {k:(s,t)=>[s,1,t],n:(s,t)=>[s*Ls[0],Ls[1]+t*Ls[2]],d:[0,2]},
+    {k:(s,t)=>[s,t,1],n:(s,t)=>[s*Ls[0],Ls[1]+Ls[2]+(1-t)*Ls[1]],d:[0,1]}];
+  const kAt=f=>f.map((v,i)=>lo[i]+v*(hi[i]-lo[i]));
+  const pts=[],I=[],J=[],K=[],edges=[];
+  FN.forEach(fc=>{const ns=Math.round(14*Ls[fc.d[0]]),nt=Math.round(14*Ls[fc.d[1]]),base=pts.length;
+    for(let i=0;i<=ns;i++)for(let j=0;j<=nt;j++){const sv=i/ns,tv=j/nt,k=kAt(fc.k(sv,tv)),m=sbModes(k,q,sym);pts.push({n:fc.n(sv,tv),k,w:m.w,pol:m.pol})}
+    const id=(i,j)=>base+i*(nt+1)+j;
+    for(let i=0;i<ns;i++)for(let j=0;j<nt;j++){I.push(id(i,j),id(i,j));J.push(id(i+1,j),id(i+1,j+1));K.push(id(i+1,j+1),id(i,j+1))}
+    edges.push([...Array(ns+1).keys()].map(i=>id(i,0)),[...Array(nt+1).keys()].map(j=>id(ns,j)),[...Array(ns+1).keys()].map(i=>id(i,nt)),[...Array(nt+1).keys()].map(j=>id(0,j)))});
+  const X=pts.map(p=>p.n[0]),Y=pts.map(p=>p.n[1]),kTxt=k=>"("+k.map(v=>(v/P).toFixed(3)).join(", ")+") π/a";
+  const tr=[];
+  for(const b of shown){
+    tr.push({type:"mesh3d",x:X,y:Y,z:pts.map(p=>p.w[b]),i:I,j:J,k:K,vertexcolor:pts.map(p=>polColor(p.pol[b],rgb)),opacity:shown.length>1&&b===shown[shown.length-1]?0.4:1,
+      lighting:{ambient:0.7,diffuse:0.55,specular:0.05,roughness:0.9},customdata:pts.map(p=>kTxt(p.k)+"<br>"+polTxt(p.pol[b])),
+      hovertemplate:`band ${b+1}<br>ω = %{z:.4f}<br>k = %{customdata}<extra></extra>`});
+    const ex=[],ey=[],ez=[];for(const line of edges){for(const n of line){ex.push(X[n]);ey.push(Y[n]);ez.push(pts[n].w[b]+0.004)}ex.push(null);ey.push(null);ez.push(null)}
+    tr.push({type:"scatter3d",mode:"lines",x:ex,y:ey,z:ez,line:{color:fg,width:3},hoverinfo:"skip"})}
+  tr.push({type:"mesh3d",x:X,y:Y,z:pts.map(()=>R.path.lo.v),i:I,j:J,k:K,color:css("--muted"),opacity:0.3,
+    hovertemplate:`level of the highest point on the path: ω = ${R.path.lo.v.toFixed(4)}<extra></extra>`});
+  // markers on the net: best point of the path (○) and the true band-3 maximum (●), if it lies on a face
+  const place=k=>{const f=k.map((v,i)=>(v-lo[i])/(hi[i]-lo[i]));
+    for(const fc of FN){const fix=[0,1,2].find(i=>!fc.d.includes(i));
+      if(Math.abs(f[fix]-fc.k(0,0)[fix])<1e-4)return fc.n(f[fc.d[0]],f[fc.d[1]])}return null};
+  const pm=place(R.path.lo.k),vm=place(R.vol.lo.k);
+  if(pm)tr.push({type:"scatter3d",mode:"markers",x:[pm[0]],y:[pm[1]],z:[R.path.lo.v],marker:{size:7,symbol:"circle-open",color:fg,line:{width:4}},
+    hovertemplate:`highest point on the path<br>ω = ${R.path.lo.v.toFixed(4)}<extra></extra>`});
+  if(vm)tr.push({type:"scatter3d",mode:"markers",x:[vm[0]],y:[vm[1]],z:[R.vol.lo.v],marker:{size:6,color:css("--seq3"),line:{color:fg,width:2}},
+    hovertemplate:`true maximum of band 3<br>ω = ${R.vol.lo.v.toFixed(4)}<extra></extra>`});
+  // corner labels; a prime marks k_x = −π
+  const nameOf=k=>{const a=k.map(v=>Math.abs(v)),nm=Object.keys(V).find(n=>V[n].every((v,i)=>Math.abs(v-a[i])<1e-6))||"";return nm+(k[0]<-1e-6?"′":"")};
+  const labs=new Map();FN.forEach(fc=>{for(const[s0,t0]of[[0,0],[1,0],[1,1],[0,1]]){const n=fc.n(s0,t0);labs.set(n.map(v=>v.toFixed(3)).join(),[n,nameOf(kAt(fc.k(s0,t0)))])}});
+  const lv=[...labs.values()],zmin=Math.min(...pts.map(p=>p.w[shown[0]]));
+  tr.push({type:"scatter3d",mode:"text",x:lv.map(v=>v[0][0]),y:lv.map(v=>v[0][1]),z:lv.map(()=>zmin),text:lv.map(v=>v[1]),
+    textfont:{color:fg,size:14,family:"Newsreader, Georgia, serif"},hoverinfo:"skip"});
+  const L=baseLayout(),ax=L._axis;delete L._axis;
+  const hide={title:{text:""},showticklabels:false,showgrid:false,zeroline:false,showbackground:false,showspikes:false};
+  const wx=Math.max(...X)-Math.min(...X),wy=Math.max(...Y)-Math.min(...Y),sc=1.6/Math.max(wx,wy);
+  const scene={bgcolor:css("--surface"),xaxis:{...ax,...hide},yaxis:{...ax,...hide},zaxis:{...ax,title:{text:"ω"},showbackground:false,showspikes:false},
+    aspectmode:"manual",aspectratio:{x:wx*sc,y:wy*sc,z:0.75}};
+  if(!el._cam){scene.camera={eye:{x:-1.3,y:-1.4,z:1.0}};el._cam=1}
+  Plotly.react(el,tr,{...L,margin:{l:0,r:0,t:0,b:0},scene,uirevision:"net"},cfg)}
 function sbRenderCell(id,sym){
   const box=document.getElementById(id),A=sbAnalyse(sym),R=A.R,fg=css("--fg"),mut=css("--muted");
   drawCell(box.querySelector(".sbcell"),sbp,sym?[[1,1,0],[1,-1,0]]:[[1,1,0]],false,{x:0.35,y:-0.45,z:2.1});
@@ -706,43 +762,8 @@ function sbRenderCell(id,sym){
     <div class="cell"><span class="k">Gap · path</span><span class="v">${gt(R.path.gap)}</span>${pill(R.path.gap)}</div>
     <div class="cell"><span class="k">Gap · faces</span><span class="v">${gt(R.faces.gap)}</span>${pill(R.faces.gap)}</div>
     <div class="cell"><span class="k">Gap · volume</span><span class="v">${gt(gv)}</span><span class="s">${gv>0?`ω ${R.vol.lo.v.toFixed(3)} – ${R.vol.hi.v.toFixed(3)}`:"bands 3 and 4 overlap"}</span></div>`;
-  // face that holds the band-3 maximum (prefer k_z, then k_y, then k_x; fallback k_z = π)
-  const km=R.vol.lo.k;let ax=[2,1,0].find(i=>Math.abs(km[i]-A.lo[i])<1e-4||Math.abs(km[i]-A.hi[i])<1e-4);
-  const fv=ax===undefined?P:(Math.abs(km[ax]-A.hi[ax])<1e-4?A.hi[ax]:A.lo[ax]);if(ax===undefined)ax=2;
-  const o=[0,1,2].filter(c=>c!==ax),N=[24*A.wide(o[0]),24*A.wide(o[1])];
-  const xs=[...Array(N[0]+1)].map((_,i)=>A.lo[o[0]]+(A.hi[o[0]]-A.lo[o[0]])*i/N[0]),ys=[...Array(N[1]+1)].map((_,j)=>A.lo[o[1]]+(A.hi[o[1]]-A.lo[o[1]])*j/N[1]);
-  const W=ys.map(y=>xs.map(x=>{const k=[0,0,0];k[ax]=fv;k[o[0]]=x;k[o[1]]=y;return A.B(k)}));
-  const z3=W.map(r=>r.map(w=>w[2])),z4=W.map(r=>r.map(w=>w[3]));
-  const nm=["k<sub>x</sub>","k<sub>y</sub>","k<sub>z</sub>"],plain=s=>s.replace(/<\/?sub>/g,"");
-  const seq=["--seq0","--seq1","--seq2","--seq3","--seq4"].map((v,i)=>[i/4,css(v)]);
-  const onFace=k=>Math.abs(k[ax]-fv)<1e-4,X=xs.map(v=>v/P),Y=ys.map(v=>v/P);
-  const hov=b=>`band ${b}: ω = %{z:.4f}<br>${plain(nm[o[0]])} = %{x:.3f} π/a<br>${plain(nm[o[1]])} = %{y:.3f} π/a<extra></extra>`;
-  // perimeter of the face = the part of the standard path on it, drawn on the band-3 sheet
-  const per=[];const nx=X.length-1,ny=Y.length-1;
-  for(let i=0;i<=nx;i++)per.push([i,0]);for(let j=0;j<=ny;j++)per.push([nx,j]);for(let i=nx;i>=0;i--)per.push([i,ny]);for(let j=ny;j>=0;j--)per.push([0,j]);
-  // colour band 3 blue up to the highest point of the path, orange above it (the part the path misses)
-  const zlo=Math.min(...z3.flat()),zhi=Math.max(...z3.flat()),tcut=Math.min(1,Math.max(0,(R.path.lo.v+1e-9-zlo)/(zhi-zlo||1)));
-  const warn=css("--warn"),cs3=tcut>=1?seq:[[0,css("--seq0")],[tcut*0.5,css("--seq1")],[tcut*0.85,css("--seq2")],[tcut,css("--seq3")],[Math.min(1,tcut+1e-4),warn],[1,warn]];
-  const tr=[
-    {type:"surface",x:X,y:Y,z:z3,surfacecolor:z3,cmin:zlo,cmax:zhi,colorscale:cs3,showscale:false,lighting:{ambient:0.75,diffuse:0.5,specular:0.05},hovertemplate:hov(3),
-      contours:{z:{show:true,color:css("--surface"),width:1,start:zlo,end:zhi,size:(zhi-zlo)/12}}}];
-  if(document.getElementById("sbB4").checked)tr.push({type:"surface",x:X,y:Y,z:z4,colorscale:[[0,mut],[1,mut]],showscale:false,opacity:0.35,hovertemplate:hov(4)});
-  tr.push(
-    {type:"surface",x:[X[0],X[nx]],y:[Y[0],Y[ny]],z:[[R.path.lo.v,R.path.lo.v],[R.path.lo.v,R.path.lo.v]],colorscale:[[0,css("--warn")],[1,css("--warn")]],
-      showscale:false,opacity:0.28,hovertemplate:`level of the highest point on the path: ω = ${R.path.lo.v.toFixed(4)}<extra></extra>`},
-    {type:"scatter3d",mode:"lines",x:per.map(([i])=>X[i]),y:per.map(([,j])=>Y[j]),z:per.map(([i,j])=>z3[j][i]),line:{color:fg,width:6},hoverinfo:"skip"});
-  if(onFace(R.path.lo.k))tr.push({type:"scatter3d",mode:"markers",x:[R.path.lo.k[o[0]]/P],y:[R.path.lo.k[o[1]]/P],z:[R.path.lo.v],
-    marker:{size:7,symbol:"circle-open",color:css("--warn"),line:{width:4}},hovertemplate:`highest point on the path<br>ω = ${R.path.lo.v.toFixed(4)}<extra></extra>`});
-  if(onFace(km))tr.push({type:"scatter3d",mode:"markers",x:[km[o[0]]/P],y:[km[o[1]]/P],z:[R.vol.lo.v],
-    marker:{size:6,color:css("--seq3"),line:{color:fg,width:2}},hovertemplate:`true maximum of band 3<br>ω = ${R.vol.lo.v.toFixed(4)}<extra></extra>`});
-  const L=baseLayout(),axs=L._axis;delete L._axis;
-  const sc={bgcolor:css("--surface"),aspectmode:"manual",aspectratio:{x:A.wide(o[0])*1.0,y:A.wide(o[1])*1.0,z:0.7},
-    xaxis:{...axs,title:{text:plain(nm[o[0]])+" (π/a)"},showbackground:false,showspikes:false},
-    yaxis:{...axs,title:{text:plain(nm[o[1]])+" (π/a)"},showbackground:false,showspikes:false},
-    zaxis:{...axs,title:{text:"ω"},showbackground:false,showspikes:false}};
-  const el=box.querySelector(".sbplot");if(!el._cam){sc.camera={eye:{x:-1.2,y:-1.6,z:0.75}};el._cam=1}
-  Plotly.react(el,tr,{...L,margin:{l:0,r:0,t:30,b:0},scene:sc,uirevision:"sb",
-    title:{text:`face ${nm[ax]} = ${fv<0?"−":""}${Math.abs(fv)<1e-9?"0":"π"} · bands 3 (colour) and 4 (grey)`,font:{size:13,color:fg},x:0.02,xanchor:"left"}},cfg);
+  sbNet(box.querySelector(".sbplot"),A,R,sbp,sym,document.getElementById("sbB4").checked?[2,3]:[2]);
+  const km=R.vol.lo.k;
   const kf=k=>"("+k.map(v=>(v/P).toFixed(3)).join(", ")+") π/a";
   box.querySelector(".readout").innerHTML=`Band 3 maximum: ω = ${R.vol.lo.v.toFixed(4)} at ${kf(km)}, ${sbWhere(km,A.lo,A.hi)}.<br>Highest point on the path: ω = ${R.path.lo.v.toFixed(4)} at ${kf(R.path.lo.k)}.<br>Band 4 minimum: ω = ${R.vol.hi.v.toFixed(4)} at ${kf(R.vol.hi.k)}.`}
 // 3D case: all six <110> pairs (the top-of-page model), slightly unequal springs -> band-3 top inside the volume
@@ -757,6 +778,7 @@ function renderV3(){
     <div class="cell"><span class="k">Gap · faces</span><span class="v">${R.faces.gap.toFixed(3)}</span>${pill(R.faces.gap)}</div>
     <div class="cell"><span class="k">Gap · volume</span><span class="v">${gv.toFixed(3)}</span><span class="s">ω ${R.vol.lo.v.toFixed(3)} – ${R.vol.hi.v.toFixed(3)}</span></div>`;
   drawCell(box.querySelector(".sbcell"),V3,DIAG.map(o=>o.d),false);
+  sbNet(box.querySelector(".sbplot"),A,R,V3,"all");
   // band 3 on a grid over the box, for the region above the face maximum
   const N=22,t=[...Array(N+1)].map((_,i)=>P*i/N),X=[],Y=[],Z=[],W=[];
   for(const a of t)for(const b of t)for(const c of t){X.push(a/P);Y.push(b/P);Z.push(c/P);W.push(sbBands([a,b,c],V3,"all")[2])}
