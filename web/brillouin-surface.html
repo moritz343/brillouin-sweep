@@ -91,7 +91,7 @@ select{font:13px var(--body);color:var(--fg);background:var(--surface);border:1p
 .sbcells{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .sb .cell{padding:10px 12px}
 .sb .cell .v{font-size:17px}
-.sbplot{min-height:340px}
+.sbplot{min-height:420px}
 @media (max-width:860px){.sbgrid{grid-template-columns:1fr}}
 @media (max-width:860px){.plots,.setup{grid-template-columns:1fr}.plots .big{grid-row:auto}.big .plot{min-height:460px}.setup .plot{min-height:340px}}
 </style>
@@ -193,7 +193,7 @@ select{font:13px var(--body);color:var(--fg);background:var(--surface);border:1p
         <p class="readout"></p>
       </div>
     </div>
-    <p class="hint">Each map shows band 3, the band below the gap, over the face that contains its maximum. The thick outline is the part of the standard path on that face. ● marks the true maximum, found over the whole zone. ○ marks the highest point the path finds.</p>
+    <p class="hint">Each plot shows the dispersion surfaces over the face that contains the maximum of band 3: band 3 below the gap in colour, band 4 above it in grey. The black line is the part of the standard path on that face, drawn on band 3. The orange plane sits at the height of the highest point the path finds (○). In the symmetric cell nothing rises above it. In the symmetry-broken cell a dome pushes through the plane in the middle of the face, up to the true maximum ●, which narrows the real gap. Drag to rotate.</p>
     <div class="panel prose">
       <h2>Why the faces are needed here</h2>
       <p><b>Symmetric cell: the corners always win.</b> Every entry of the dynamical matrix is built from cos k<sub>x</sub>, cos k<sub>y</sub> and cos k<sub>z</sub>, and is linear in each of them separately. The two mirror-image diagonal springs enter as a pair, and cos(k<sub>x</sub>+k<sub>y</sub>) + cos(k<sub>x</sub>−k<sub>y</sub>) = 2 cos k<sub>x</sub> cos k<sub>y</sub>, which keeps that structure. Without diagonal springs, each band depends monotonically on one such function, and a function that is linear in each coordinate has its extremes at the corners of a box. So the gap edges sit on the path. With diagonal springs this is no longer a proof, but in 206 random symmetric cells with a gap, both edges were at a corner every time.</p>
@@ -231,8 +231,9 @@ select{font:13px var(--body);color:var(--fg);background:var(--surface);border:1p
     </div>
     <div class="plotcard">
       <div class="head"><h2>Polar view: the three faces through Γ</h2>
-        <div class="presets"><select id="polMode" aria-label="Polar view mode"><option value="map">Band map: frequency over direction and |k|</option><option value="speed">Sound speed near Γ (bands 1–3)</option></select>
-          <select id="polBand" aria-label="Band for the polar map"></select></div></div>
+        <div class="presets"><select id="polMode" aria-label="Polar view mode"><option value="funnel">3D funnel: frequency as height</option><option value="map">Flat map: frequency as colour</option><option value="speed">Sound speed near Γ (bands 1–3)</option></select>
+          <select id="polBand" aria-label="Band for the polar map"></select>
+          <select id="polRad" aria-label="Radial scale"><option value="sqrt">Radius ∝ √|k| (stretched near Γ)</option><option value="lin">Radius ∝ |k| (true scale)</option></select></div></div>
       <div class="plot" id="pPolar" style="min-height:400px"></div>
       <p class="hint" id="polHint"></p>
     </div>
@@ -687,24 +688,34 @@ function sbRenderCell(id,sym){
   const fv=ax===undefined?P:(Math.abs(km[ax]-A.hi[ax])<1e-4?A.hi[ax]:A.lo[ax]);if(ax===undefined)ax=2;
   const o=[0,1,2].filter(c=>c!==ax),N=[24*A.wide(o[0]),24*A.wide(o[1])];
   const xs=[...Array(N[0]+1)].map((_,i)=>A.lo[o[0]]+(A.hi[o[0]]-A.lo[o[0]])*i/N[0]),ys=[...Array(N[1]+1)].map((_,j)=>A.lo[o[1]]+(A.hi[o[1]]-A.lo[o[1]])*j/N[1]);
-  const z=ys.map(y=>xs.map(x=>{const k=[0,0,0];k[ax]=fv;k[o[0]]=x;k[o[1]]=y;return A.B(k)[2]}));
-  const nm=["k<sub>x</sub>","k<sub>y</sub>","k<sub>z</sub>"],seq=["--seq0","--seq1","--seq2","--seq3","--seq4"].map((v,i)=>[i/4,css(v)]);
-  const onFace=k=>Math.abs(k[ax]-fv)<1e-4;
-  const tr=[{type:"contour",x:xs.map(v=>v/P),y:ys.map(v=>v/P),z,colorscale:seq,ncontours:14,line:{color:css("--surface"),width:0.6},
-      colorbar:{thickness:10,len:0.9,tickfont:{color:mut,size:10},outlinewidth:0,title:{text:"ω",font:{color:fg}}},
-      hovertemplate:`band 3: ω = %{z:.4f}<br>${nm[o[0]].replace(/<\/?sub>/g,"")} = %{x:.3f} π/a<br>${nm[o[1]].replace(/<\/?sub>/g,"")} = %{y:.3f} π/a<extra></extra>`},
-    {type:"scatter",mode:"lines",x:[A.lo[o[0]],A.hi[o[0]],A.hi[o[0]],A.lo[o[0]],A.lo[o[0]]].map(v=>v/P),y:[A.lo[o[1]],A.lo[o[1]],A.hi[o[1]],A.hi[o[1]],A.lo[o[1]]].map(v=>v/P),
-      line:{color:fg,width:4},hoverinfo:"skip"}];
-  if(onFace(R.path.lo.k))tr.push({type:"scatter",mode:"markers",x:[R.path.lo.k[o[0]]/P],y:[R.path.lo.k[o[1]]/P],marker:{size:15,symbol:"circle-open",color:css("--warn"),line:{width:3}},
-    hovertemplate:`highest point on the path<br>ω = ${R.path.lo.v.toFixed(4)}<extra></extra>`});
-  if(onFace(km))tr.push({type:"scatter",mode:"markers",x:[km[o[0]]/P],y:[km[o[1]]/P],marker:{size:12,color:css("--seq3"),line:{color:fg,width:2}},
-    hovertemplate:`true maximum of band 3<br>ω = ${R.vol.lo.v.toFixed(4)}<extra></extra>`});
+  const W=ys.map(y=>xs.map(x=>{const k=[0,0,0];k[ax]=fv;k[o[0]]=x;k[o[1]]=y;return A.B(k)}));
+  const z3=W.map(r=>r.map(w=>w[2])),z4=W.map(r=>r.map(w=>w[3]));
+  const nm=["k<sub>x</sub>","k<sub>y</sub>","k<sub>z</sub>"],plain=s=>s.replace(/<\/?sub>/g,"");
+  const seq=["--seq0","--seq1","--seq2","--seq3","--seq4"].map((v,i)=>[i/4,css(v)]);
+  const onFace=k=>Math.abs(k[ax]-fv)<1e-4,X=xs.map(v=>v/P),Y=ys.map(v=>v/P);
+  const hov=b=>`band ${b}: ω = %{z:.4f}<br>${plain(nm[o[0]])} = %{x:.3f} π/a<br>${plain(nm[o[1]])} = %{y:.3f} π/a<extra></extra>`;
+  // perimeter of the face = the part of the standard path on it, drawn on the band-3 sheet
+  const per=[];const nx=X.length-1,ny=Y.length-1;
+  for(let i=0;i<=nx;i++)per.push([i,0]);for(let j=0;j<=ny;j++)per.push([nx,j]);for(let i=nx;i>=0;i--)per.push([i,ny]);for(let j=ny;j>=0;j--)per.push([0,j]);
+  const tr=[
+    {type:"surface",x:X,y:Y,z:z3,colorscale:seq,showscale:false,lighting:{ambient:0.75,diffuse:0.5,specular:0.05},hovertemplate:hov(3),
+      contours:{z:{show:true,color:css("--surface"),width:1,start:Math.min(...z3.flat()),end:Math.max(...z3.flat()),size:(Math.max(...z3.flat())-Math.min(...z3.flat()))/12}}},
+    {type:"surface",x:X,y:Y,z:z4,colorscale:[[0,mut],[1,mut]],showscale:false,opacity:0.35,hovertemplate:hov(4)},
+    {type:"surface",x:[X[0],X[nx]],y:[Y[0],Y[ny]],z:[[R.path.lo.v,R.path.lo.v],[R.path.lo.v,R.path.lo.v]],colorscale:[[0,css("--warn")],[1,css("--warn")]],
+      showscale:false,opacity:0.28,hovertemplate:`level of the highest point on the path: ω = ${R.path.lo.v.toFixed(4)}<extra></extra>`},
+    {type:"scatter3d",mode:"lines",x:per.map(([i])=>X[i]),y:per.map(([,j])=>Y[j]),z:per.map(([i,j])=>z3[j][i]),line:{color:fg,width:6},hoverinfo:"skip"}];
+  if(onFace(R.path.lo.k))tr.push({type:"scatter3d",mode:"markers",x:[R.path.lo.k[o[0]]/P],y:[R.path.lo.k[o[1]]/P],z:[R.path.lo.v],
+    marker:{size:7,symbol:"circle-open",color:css("--warn"),line:{width:4}},hovertemplate:`highest point on the path<br>ω = ${R.path.lo.v.toFixed(4)}<extra></extra>`});
+  if(onFace(km))tr.push({type:"scatter3d",mode:"markers",x:[km[o[0]]/P],y:[km[o[1]]/P],z:[R.vol.lo.v],
+    marker:{size:6,color:css("--seq3"),line:{color:fg,width:2}},hovertemplate:`true maximum of band 3<br>ω = ${R.vol.lo.v.toFixed(4)}<extra></extra>`});
   const L=baseLayout(),axs=L._axis;delete L._axis;
-  Plotly.react(box.querySelector(".sbplot"),tr,{...L,margin:{l:52,r:10,t:30,b:44},
-    title:{text:`face ${nm[ax]} = ${fv<0?"−":""}${Math.abs(fv)<1e-9?"0":"π"}`,font:{size:13,color:fg},x:0.02,xanchor:"left"},
-    xaxis:{...axs,title:{text:nm[o[0]]+" (π/a)"},range:[A.lo[o[0]]/P-0.03,A.hi[o[0]]/P+0.03],zeroline:false},
-    yaxis:{...axs,title:{text:nm[o[1]]+" (π/a)"},range:[A.lo[o[1]]/P-0.03,A.hi[o[1]]/P+0.03],zeroline:false,scaleanchor:"x"}},
-    {...cfg,modeBarButtonsToRemove:["lasso2d","select2d"]});
+  const sc={bgcolor:css("--surface"),aspectmode:"manual",aspectratio:{x:A.wide(o[0])*1.0,y:A.wide(o[1])*1.0,z:0.7},
+    xaxis:{...axs,title:{text:plain(nm[o[0]])+" (π/a)"},showbackground:false,showspikes:false},
+    yaxis:{...axs,title:{text:plain(nm[o[1]])+" (π/a)"},showbackground:false,showspikes:false},
+    zaxis:{...axs,title:{text:"ω"},showbackground:false,showspikes:false}};
+  const el=box.querySelector(".sbplot");if(!el._cam){sc.camera={eye:{x:-1.2,y:-1.6,z:0.75}};el._cam=1}
+  Plotly.react(el,tr,{...L,margin:{l:0,r:0,t:30,b:0},scene:sc,uirevision:"sb",
+    title:{text:`face ${nm[ax]} = ${fv<0?"−":""}${Math.abs(fv)<1e-9?"0":"π"} · bands 3 (colour) and 4 (grey)`,font:{size:13,color:fg},x:0.02,xanchor:"left"}},cfg);
   const kf=k=>"("+k.map(v=>(v/P).toFixed(3)).join(", ")+") π/a";
   box.querySelector(".readout").innerHTML=`Band 3 maximum: ω = ${R.vol.lo.v.toFixed(4)} at ${kf(km)}, ${sbWhere(km,A.lo,A.hi)}.<br>Highest point on the path: ω = ${R.path.lo.v.toFixed(4)} at ${kf(R.path.lo.k)}.<br>Band 4 minimum: ω = ${R.vol.hi.v.toFixed(4)} at ${kf(R.vol.hi.k)}.`}
 function renderSB(){
@@ -732,8 +743,11 @@ function polRay(far){ // samples along Γ→X ([100]), Γ→M ([110]) or Γ→R 
 function renderPolar(){
   if(!window.Plotly||typeof POL==="undefined")return;
   const el=document.getElementById("pPolar"),fg=css("--fg"),mut=css("--muted"),line=css("--line"),rgb=AXC.map(css).map(hexRgb);
-  const mode=document.getElementById("polMode").value,band=+document.getElementById("polBand").value;
-  document.getElementById("polBand").style.display=mode==="map"?"":"none";
+  const mode=document.getElementById("polMode").value,bsel=document.getElementById("polBand").value;
+  const band=bsel[0]==="g"?+bsel.slice(1):bsel==="all"?0:+bsel;
+  document.getElementById("polBand").style.display=mode==="speed"?"none":"";
+  document.getElementById("polRad").style.display=mode==="funnel"?"":"none";
+  if(mode==="funnel"){renderFunnel(el,bsel);return}
   const narrow=el.clientWidth<640,tr=[],L=baseLayout();delete L._axis;
   const lay={...L,margin:{l:10,r:10,t:30,b:20},height:narrow?1050:420,annotations:[]};
   let fmin=Infinity,fmax=-Infinity,vmax=0;
@@ -780,9 +794,59 @@ function renderPolar(){
     :`Phase velocity ω/|k| of the three acoustic waves at the innermost point of each ray (|k| ≈ 0.016–0.027 π/a). A circle would mean the same speed in every direction. Colour shows the direction of motion: along the ray for the longitudinal wave, across it for the two shear waves. These are not static sound speeds: the waves are already at ${fmin.toFixed(0)}–${fmax.toFixed(0)} Hz here, below but close to the resonance, and the flat 344.5 Hz band has been left out. Caveat: at 16³ voxels the silicone coatings of neighbouring cells touch along the cube axes (the real 0.5 mm epoxy gap is thinner than one voxel), which can change the direction dependence.`)
     +` ${done} of ${POL.k.length} k-points of the polar sweep.`;
 }
+// 3D funnel: the three faces through Γ unfolded into one fan around Γ, frequency as height.
+// Fan angle: [100] → [110] along k_z = 0 (0–45°), [110] → [111] along k_x = k_y (45–80.3°),
+// [111] → [100] along k_y = k_z (80.3–135°). The borders between the segments are the path edges ΓX, ΓM, ΓR;
+// the outer rim is the outer face k_x = π/a (edges X M, M R, R X).
+function renderFunnel(el,bsel){
+  const fg=css("--fg"),mut=css("--muted"),rgb=AXC.map(css).map(hexRgb);
+  const shown=bsel==="all"?[...Array(12).keys()]:bsel[0]==="g"?[0,1,2].map(i=>i+ +bsel.slice(1)):[+bsel];
+  const rA=polRows("A"),rD=polRows("D"),rC=polRows("C");
+  const aA=rA[rA.length-1].angle,aD=rD[rD.length-1].angle,aC=rC[rC.length-1].angle;
+  const segs=[{rays:rA,fan:a=>a,face:"k_z = 0",from:"[100]"},{rays:rD,fan:a=>aA+a,face:"k_x = k_y",from:"[110]"},
+    {rays:[...rC].reverse(),fan:a=>aA+aD+(aC-a),face:"k_y = k_z",from:"[100]"}];
+  const sq=document.getElementById("polRad").value==="sqrt",rad=r=>sq?Math.sqrt(r):r;
+  const X=[],Y=[],V=[],I=[],J=[],K=[],borders=[],rim=[];
+  segs.forEach((sg,si)=>{const base=V.length,nd=sg.rays.length,ns=sg.rays[0].samples.length;
+    sg.rays.forEach(ray=>{const fa=sg.fan(ray.angle),ph=fa*Math.PI/180;
+      ray.samples.forEach(q=>{X.push(rad(q.r)*Math.cos(ph));Y.push(rad(q.r)*Math.sin(ph));V.push({i:q.i,r:q.r,a:ray.angle,fa,face:sg.face,from:sg.from,rim:q.m===ray.samples.length-1})})});
+    const id=(d,j)=>base+d*ns+j;
+    for(let d=0;d<nd-1;d++)for(let j=0;j<ns-1;j++){
+      if(j>0){I.push(id(d,j));J.push(id(d+1,j));K.push(id(d+1,j+1))}
+      I.push(id(d,j));J.push(id(d+1,j+1));K.push(id(d,j+1))}
+    borders.push([...Array(ns).keys()].map(j=>id(0,j)));
+    if(si===2)borders.push([...Array(ns).keys()].map(j=>id(nd-1,j)));
+    for(let d=0;d<nd;d++)rim.push(id(d,ns-1))});
+  const tr=[];let zmin=Infinity;
+  for(const b of shown){
+    const z=V.map(v=>POL.f[v.i][b]);zmin=Math.min(zmin,...z);
+    tr.push({type:"mesh3d",x:X,y:Y,z,i:I,j:J,k:K,vertexcolor:V.map(v=>polColor(POL.p[v.i][b].map(x=>x/100),rgb)),opacity:1,flatshading:false,
+      lighting:{ambient:0.7,diffuse:0.55,specular:0.05,roughness:0.9},
+      customdata:V.map(v=>[v.r.toFixed(3),v.a.toFixed(1),v.face,v.from,polTxt(POL.p[v.i][b].map(x=>x/100))]),
+      hovertemplate:`Band ${b+1}<br>f = %{z:.1f} Hz<br>|k| = %{customdata[0]} π/a<br>%{customdata[1]}° from %{customdata[3]} on face %{customdata[2]}<br>%{customdata[4]}<extra></extra>`});
+    const lx=[],ly=[],lz=[];
+    for(const line of[...borders,rim]){for(const n of line){lx.push(X[n]);ly.push(Y[n]);lz.push(POL.f[V[n].i][b]+3)}lx.push(null);ly.push(null);lz.push(null)}
+    tr.push({type:"scatter3d",mode:"lines",x:lx,y:ly,z:lz,line:{color:fg,width:4},hoverinfo:"skip"})}
+  // corner labels just outside the rim, at the height of the highest shown band there
+  const top=n=>Math.max(...shown.map(b=>POL.f[V[n].i][b]));
+  const labs=[["Γ",[0,0],zmin]];
+  for(const[t,a]of[["X",0],["M",aA],["R",aA+aD],["X",aA+aD+aC]]){
+    const n=V.reduce((best,v,j)=>v.rim&&(best<0||Math.abs(v.fa-a)<Math.abs(V[best].fa-a))?j:best,-1);
+    labs.push([t,[X[n]*1.1,Y[n]*1.1],top(n)])}
+  tr.push({type:"scatter3d",mode:"text",x:labs.map(l=>l[1][0]),y:labs.map(l=>l[1][1]),z:labs.map(l=>l[2]),text:labs.map(l=>l[0]),
+    textposition:"top center",textfont:{color:fg,size:16,family:"Newsreader, Georgia, serif"},hoverinfo:"skip"});
+  const L=baseLayout(),ax=L._axis;delete L._axis;
+  const hide={title:{text:""},showticklabels:false,showgrid:false,zeroline:false,showbackground:false,showspikes:false};
+  const scene={bgcolor:css("--surface"),xaxis:{...ax,...hide},yaxis:{...ax,...hide},zaxis:{...ax,title:{text:"f (Hz)"},showbackground:false,showspikes:false},
+    aspectmode:"manual",aspectratio:{x:1.4,y:1.1,z:0.9}};
+  if(!el._fcam){scene.camera={eye:{x:0.2,y:-1.9,z:1.0}};el._fcam=1}
+  Plotly.react(el,tr,{...L,height:Math.max(460,Math.min(620,el.clientWidth*0.6)),margin:{l:0,r:0,t:0,b:0},scene,uirevision:"funnel"},cfg);
+  document.getElementById("polHint").innerHTML=`The three faces through Γ, unfolded into one fan around Γ (centre), in polar form: the direction of travel is the angle, the distance from Γ stands for |k| (${sq?"drawn as √|k|, which stretches the region near Γ where the acoustic bands rise; switch to the true scale to see how narrow the funnel really is":"true scale"}), and the frequency is the height. Going round the fan: [100] → [110] on the face k<sub>z</sub> = 0, [110] → [111] on k<sub>x</sub> = k<sub>y</sub>, and [111] → [100] on k<sub>y</sub> = k<sub>z</sub>, 135° in total. The black lines are the standard path: the borders between the segments are Γ X, Γ M and Γ R, and the outer rim is the outer face k<sub>x</sub> = π/a. The acoustic bands 1–3 form a funnel that rises from 0 at Γ and levels off at the flat 344.5 Hz band. Bands 7–9 form a second funnel above the gap: its tip at Γ, at 759 Hz, is the upper gap edge, and it opens up to about 1.37 kHz. Colour = direction of motion. Drag to rotate. ${POL.f.filter(Boolean).length} of ${POL.k.length} k-points of the polar sweep.`;
+}
 const polBandSel=document.getElementById("polBand");
+for(const[v,t]of[["g0","Bands 1–3"],["g3","Bands 4–6"],["g6","Bands 7–9"],["g9","Bands 10–12"],["all","All 12 bands"]]){const o=document.createElement("option");o.value=v;o.textContent=t;polBandSel.appendChild(o)}
 for(let b=0;b<12;b++){const o=document.createElement("option");o.value=b;o.textContent=`Band ${b+1}`;polBandSel.appendChild(o)}
-polBandSel.value="5";
+polBandSel.value="g0";
 
 const onTheme=()=>{schedule();requestAnimationFrame(renderFEM);sbSchedule()};
 document.getElementById("bandSel").addEventListener("change",schedule);
@@ -790,6 +854,7 @@ document.getElementById("polSel").addEventListener("change",schedule);
 document.getElementById("femSel").addEventListener("change",renderFEM);
 document.getElementById("polMode").addEventListener("change",renderPolar);
 document.getElementById("polBand").addEventListener("change",renderPolar);
+document.getElementById("polRad").addEventListener("change",renderPolar);
 addEventListener("resize",()=>{clearTimeout(window._pr);window._pr=setTimeout(renderPolar,200)});
 try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",onTheme)}catch(e){}
 new MutationObserver(onTheme).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
