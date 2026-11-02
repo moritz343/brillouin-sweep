@@ -230,6 +230,14 @@ select{font:13px var(--body);color:var(--fg);background:var(--surface);border:1p
       <h2 class="femtitle">First real unit cell: a Liu-type locally resonant cube</h2>
       <p>A lead sphere (r = 5 mm) with a 2.5 mm silicone coating, embedded in epoxy on a simple cubic lattice, a = 15.5 mm, after Liu et al. (<i>Science</i> 289, 2000). Computed with the open-source Floquet–Bloch voxel solver from this project: 16³ voxels, 12 bands at every point of a 6-step grid over the whole irreducible zone. For a cubic lattice that zone is the tetrahedron Γ X M R, so its boundary is four triangles instead of six rectangles.</p>
     </header>
+    <div class="sbgrid">
+      <div class="plotcard"><div class="head"><h2>The unit cell</h2></div>
+        <div class="plot" id="liuCell" style="min-height:360px"></div>
+        <p class="hint">Epoxy cube with a = 15.5 mm. Inside is a silicone shell (outer radius 7.5 mm, drawn with one quarter cut away) and the lead core (radius 5 mm) at its centre. Along the cube axes only 0.5 mm of epoxy separates the shells of neighbouring cells. Drag to rotate.</p></div>
+      <div class="plotcard"><div class="head"><h2>What the solver sees: 16³ voxels</h2></div>
+        <svg id="liuVox" viewBox="0 0 360 360" role="img" aria-label="Mid-plane cut through the 16 by 16 by 16 voxel model of the Liu cell" style="width:100%;max-width:400px;height:auto;align-self:center"></svg>
+        <p class="hint" id="liuVoxHint"></p></div>
+    </div>
     <div class="verdict" id="femVerdict"></div>
     <div class="plots">
       <div class="plotcard big">
@@ -766,6 +774,43 @@ function sbRenderCell(id,sym){
   const km=R.vol.lo.k;
   const kf=k=>"("+k.map(v=>(v/P).toFixed(3)).join(", ")+") π/a";
   box.querySelector(".readout").innerHTML=`Band 3 maximum: ω = ${R.vol.lo.v.toFixed(4)} at ${kf(km)}, ${sbWhere(km,A.lo,A.hi)}.<br>Highest point on the path: ω = ${R.path.lo.v.toFixed(4)} at ${kf(R.path.lo.k)}.<br>Band 4 minimum: ω = ${R.vol.hi.v.toFixed(4)} at ${kf(R.vol.hi.k)}.`}
+// ---- Liu cell sketch (geometry of cells/liu_cubic.json) and its 16³ voxel cut ----
+const LIU={a:15.5,rSil:7.5,rLead:5,n:16};
+function renderLiuCell(){
+  if(!window.Plotly)return;
+  const fg=css("--fg"),epo=css("--hostfill"),sil=css("--seq1"),lead=css("--fg2"),h=LIU.a/2,tr=[];
+  const sphere=(r,color,op,name,cut)=>{const nu=36,nv=24,X=[],Y=[],Z=[];
+    for(let i=0;i<=nv;i++){const th=Math.PI*i/nv,rx=[],ry=[],rz=[];
+      for(let j=0;j<=nu;j++){const ph=(cut?Math.PI/2:0)+(cut?1.5:2)*Math.PI*j/nu;rx.push(r*Math.sin(th)*Math.cos(ph));ry.push(r*Math.sin(th)*Math.sin(ph));rz.push(r*Math.cos(th))}
+      X.push(rx);Y.push(ry);Z.push(rz)}
+    return{type:"surface",x:X,y:Y,z:Z,colorscale:[[0,color],[1,color]],showscale:false,opacity:op,name,hovertemplate:name+"<extra></extra>",
+      lighting:{ambient:0.7,diffuse:0.6,specular:0.1}}};
+  tr.push(sphere(LIU.rSil,sil,0.75,"silicone shell, r = 7.5 mm",true));
+  tr.push(sphere(LIU.rLead,lead,1,"lead core, r = 5 mm",false));
+  // epoxy cube: translucent box + edges
+  const C=[];for(const x of[-h,h])for(const y of[-h,h])for(const z of[-h,h])C.push([x,y,z]);
+  tr.push({type:"mesh3d",x:C.map(c=>c[0]),y:C.map(c=>c[1]),z:C.map(c=>c[2]),alphahull:0,color:epo,opacity:0.18,hovertemplate:"epoxy, a = 15.5 mm<extra></extra>"});
+  const ex=[],ey=[],ez=[];for(let i=0;i<8;i++)for(let j=i+1;j<8;j++)if(C[i].filter((v,c)=>v!==C[j][c]).length===1){ex.push(C[i][0],C[j][0],null);ey.push(C[i][1],C[j][1],null);ez.push(C[i][2],C[j][2],null)}
+  tr.push({type:"scatter3d",mode:"lines",x:ex,y:ey,z:ez,line:{color:fg,width:3},hoverinfo:"skip"});
+  tr.push({type:"scatter3d",mode:"text",x:[0,0],y:[-h,0],z:[-h*1.25,h*1.15],text:["a = 15.5 mm","lead r = 5 mm in silicone (2.5 mm)"],textfont:{color:fg,size:12},hoverinfo:"skip"});
+  const L=baseLayout(),ax=L._axis;delete L._axis;const sc={bgcolor:css("--surface"),aspectmode:"cube"};
+  for(const a of["xaxis","yaxis","zaxis"])sc[a]={...ax,title:{text:a[0]+" (mm)"},range:[-h*1.3,h*1.3],showbackground:false,showspikes:false};
+  const el=document.getElementById("liuCell");if(!el._cam){sc.camera={eye:{x:1.5,y:-1.25,z:0.8}};el._cam=1}
+  Plotly.react(el,tr,{...L,margin:{l:0,r:0,t:0,b:0},scene:sc,uirevision:"liu"},cfg);
+  // voxel mid-plane cut, same rule as voxel_fem.py: material by voxel centre, later shapes painted over earlier ones
+  const n=LIU.n,hv=LIU.a/n,z=(n/2+0.5)*hv-LIU.a/2,S=360/n,col={epoxy:epo,silicone:sil,lead};
+  const mat=(x,y)=>{const r2=x*x+y*y+z*z;return r2<=LIU.rLead**2?"lead":r2<=LIU.rSil**2?"silicone":"epoxy"};
+  let svg="",touch=0;
+  for(let i=0;i<n;i++)for(let j=0;j<n;j++){const x=(i+0.5)*hv-LIU.a/2,y=(j+0.5)*hv-LIU.a/2,m=mat(x,y);
+    if(m==="silicone"&&(i===0||i===n-1||j===0||j===n-1))touch++;
+    svg+=`<rect x="${(i*S).toFixed(2)}" y="${((n-1-j)*S).toFixed(2)}" width="${S.toFixed(2)}" height="${S.toFixed(2)}" fill="${col[m]}" stroke="var(--surface)" stroke-width="0.6"/>`}
+  const cr=r=>Math.sqrt(Math.max(r*r-z*z,0))/LIU.a*360;
+  svg+=`<circle cx="180" cy="180" r="${cr(LIU.rSil).toFixed(1)}" fill="none" stroke="var(--fg)" stroke-width="1.6" stroke-dasharray="5 4"/>`+
+    `<circle cx="180" cy="180" r="${cr(LIU.rLead).toFixed(1)}" fill="none" stroke="var(--fg)" stroke-width="1.6" stroke-dasharray="5 4"/>`+
+    `<rect x="0.8" y="0.8" width="358.4" height="358.4" fill="none" stroke="var(--fg)" stroke-width="1.6"/>`;
+  document.getElementById("liuVox").innerHTML=svg;
+  document.getElementById("liuVoxHint").innerHTML=`Cut through the voxel layer next to the centre (z = ${z.toFixed(2)} mm), coloured by material: <span style="color:var(--fg2)">■</span> lead, <span style="color:var(--seq1)">■</span> silicone, epoxy in pale grey. Dashed: the true circles. One voxel is ${hv.toFixed(2)} mm, wider than the 0.5 mm epoxy gap, so ${touch} silicone voxels reach the cell boundary in this layer: in the model the shells of neighbouring cells touch along the axes.`}
+
 // 3D case: all six <110> pairs (the top-of-page model), slightly unequal springs -> band-3 top inside the volume
 const V3={k:[1,0.9,0.8],r:[2,2,2],mu:0.2,s:0.55,g:0.5};
 function renderV3(){
@@ -934,7 +979,7 @@ for(const[v,t]of[["g0","Bands 1–3"],["g3","Bands 4–6"],["g6","Bands 7–9"],
 for(let b=0;b<12;b++){const o=document.createElement("option");o.value=b;o.textContent=`Band ${b+1}`;polBandSel.appendChild(o)}
 polBandSel.value="g0";
 
-const onTheme=()=>{schedule();requestAnimationFrame(renderFEM);sbSchedule();requestAnimationFrame(renderV3)};
+const onTheme=()=>{schedule();requestAnimationFrame(renderFEM);sbSchedule();requestAnimationFrame(renderV3);requestAnimationFrame(renderLiuCell)};
 document.getElementById("bandSel").addEventListener("change",schedule);
 document.getElementById("polSel").addEventListener("change",schedule);
 document.getElementById("femSel").addEventListener("change",renderFEM);
@@ -948,4 +993,5 @@ loadPreset(PRESETS[0]);
 renderFEM();
 renderSB();
 renderV3();
+renderLiuCell();
 </script>
