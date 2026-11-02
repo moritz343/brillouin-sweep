@@ -92,6 +92,9 @@ select{font:13px var(--body);color:var(--fg);background:var(--surface);border:1p
 .sb .cell{padding:10px 12px}
 .sb .cell .v{font-size:17px}
 .sbplot{min-height:420px}
+.sbcell{min-height:300px}
+.sbbox{min-height:420px}
+.sbwide{margin-top:6px}
 @media (max-width:860px){.sbgrid{grid-template-columns:1fr}}
 @media (max-width:860px){.plots,.setup{grid-template-columns:1fr}.plots .big{grid-row:auto}.big .plot{min-height:460px}.setup .plot{min-height:340px}}
 </style>
@@ -183,16 +186,30 @@ select{font:13px var(--body);color:var(--fg);background:var(--surface);border:1p
     <div class="sbgrid">
       <div class="plotcard" id="sbSym">
         <div class="head"><h2>Symmetric: both diagonals</h2></div>
+        <div class="plot sbcell"></div>
+        <p class="hint">Seen from above. Diagonal springs (purple) to all four neighbours in the x–y plane, along ±(1,1,0) and ±(1,−1,0).</p>
         <div class="sbcells"></div>
         <div class="plot sbplot"></div>
         <p class="readout"></p>
       </div>
       <div class="plotcard" id="sbAsym">
         <div class="head"><h2>Symmetry broken: only (1,1,0)</h2></div>
+        <div class="plot sbcell"></div>
+        <p class="hint">Seen from above. Diagonal springs (purple) only to the two neighbours along ±(1,1,0). The ±(1,−1,0) pair is gone.</p>
         <div class="sbcells"></div>
         <div class="plot sbplot"></div>
         <p class="readout"></p>
       </div>
+    </div>
+    <div class="plotcard sbwide" id="sbVol">
+      <div class="head"><h2>3D case: the maximum sits inside the volume</h2></div>
+      <p class="hint">A fully mirror-symmetric cell, the lattice model at the top of this page with all six ⟨110⟩ diagonal pairs and slightly unequal springs: k = (1, 0.9, 0.8), s = 0.55, g = 0.5, r = (2, 2, 2), μ = 0.2. Here the diagonal springs mix all three directions of motion, and the top of band 3 moves off every face into the interior of the zone. Even the faces miss it, and only the volume search finds the true gap.</p>
+      <div class="sbcells"></div>
+      <div class="sbgrid">
+        <div><div class="plot sbcell"></div><p class="hint">Unit cell: axial springs to the six nearest neighbours, diagonal springs to all twelve ⟨110⟩ neighbours, and the resonator inside.</p></div>
+        <div><div class="plot sbbox"></div><p class="hint">The irreducible box in k-space. Black: its 12 edges, the standard path. Orange: the region inside the box where band 3 is higher than anywhere on the six faces. It lies in the interior, off every face and edge. ● true maximum, ○ highest point on the faces. Drag to rotate.</p></div>
+      </div>
+      <p class="readout"></p>
     </div>
     <p class="hint">Each plot shows the dispersion surfaces over the face that contains the maximum of band 3: band 3 below the gap in colour, band 4 above it in grey. The black line is the part of the standard path on that face, drawn on band 3. The orange plane sits at the height of the highest point the path finds (○), and every part of band 3 above it is coloured orange: that is what the path misses. In the symmetric cell nothing rises above it. In the symmetry-broken cell a dome pushes through the plane in the middle of the face, up to the true maximum ●, which narrows the real gap. Drag to rotate.</p>
     <div class="panel prose">
@@ -318,6 +335,8 @@ const PRESETS=[
    k:[1,0.5,0.25],r:[0.3,0.5,0.8],mu:2,s:0.3,g:0},
   {id:"iso",label:"All directions equal",note:"Equal springs everywhere: a simple cubic lattice. The three directions of motion share one resonance, so the complete gap is as wide as it can be.",
    k:[1,1,1],r:[0.5,0.5,0.5],mu:2,s:0.3,g:0},
+  {id:"volume",label:"Maximum inside the volume",note:"Nearly equal springs with s = 0.55 and g = 0.5: the diagonal springs mix all three directions of motion, and the top of band 3 moves into the interior of the zone. The path and even the faces overestimate the gap. See the 3D case further down.",
+   k:[1,0.9,0.8],r:[2,2,2],mu:0.2,s:0.55,g:0.5},
   {id:"chains",label:"No sideways stiffness",note:"s = 0 and g = 0: motion along x only feels the x-springs, so each direction is an independent 1D chain. Every sheet is flat in two directions of k.",
    k:[1,0.5,0.25],r:[0.3,0.5,0.8],mu:2,s:0,g:0}];
 
@@ -520,25 +539,25 @@ function coil(p0,p1,trim0,trim1,turns,amp){const d=p1.map((v,i)=>v-p0[i]),L=sqrt
 function boxMesh(c,h,color,opacity,name,show){const x=[],y=[],z=[];
   for(const sx of[-1,1])for(const sy of[-1,1])for(const sz of[-1,1]){x.push(c[0]+sx*h);y.push(c[1]+sy*h);z.push(c[2]+sz*h)}
   return{type:"mesh3d",x,y,z,alphahull:0,color,opacity,flatshading:true,name,showlegend:show,hoverinfo:"name",lighting:{ambient:0.8,diffuse:0.4}}}
-function drawCell(){const fg=css("--fg"),tr=[],H=0.24,maxc=Math.max(...prm.k,...prm.r,prm.g);
+function drawCell(el="pCell",pp=null,dirs=DIAG.map(o=>o.d),legend=true,eye={x:1.45,y:-1.3,z:0.85}){pp=pp||prm;const E=typeof el==="string"?document.getElementById(el):el;const fg=css("--fg"),tr=[],H=0.24,maxc=Math.max(...pp.k,...pp.r,pp.g);
   const sites=[[0,0,0]];for(let i=0;i<3;i++)for(const s of[1,-1]){const p=[0,0,0];p[i]=s;sites.push(p)}
   const pushCoils=(segs,color,c,name,turns,amp)=>{const xs=[],ys=[],zs=[];
     for(const[p0,p1,t0,t1]of segs){for(const p of coil(p0,p1,t0,t1,turns,amp)){xs.push(p[0]);ys.push(p[1]);zs.push(p[2])}xs.push(null);ys.push(null);zs.push(null)}
     tr.push({type:"scatter3d",mode:"lines",x:xs,y:ys,z:zs,name,showlegend:true,hoverinfo:"name",line:{color,width:1.5+6*c/maxc}})};
   for(let i=0;i<3;i++){const u=[0,0,0];u[i]=1;const m=u.map(q=>-q);
-    pushCoils([[[0,0,0],u,H,H],[[0,0,0],m,H,H]],css(AXC[i]),prm.k[i],`host spring k_${AX[i]} = ${prm.k[i].toFixed(2)}`,5,0.06);
-    pushCoils([[[0,0,0],u.map(q=>q*H),0.06,0],[[0,0,0],m.map(q=>q*H),0.06,0]],css(AXC[i]),prm.r[i],`resonator spring r_${AX[i]} = ${prm.r[i].toFixed(2)}`,3,0.025)}
-  if(prm.g>0){const segs=[];for(const{d}of DIAG)for(const sg of[1,-1]){const p=d.map(q=>q*sg);sites.push(p);segs.push([[0,0,0],p,H*1.3,H*1.3])}
-    pushCoils(segs,css("--sd"),prm.g,`diagonal spring g = ${prm.g.toFixed(2)}`,5,0.045)}
+    pushCoils([[[0,0,0],u,H,H],[[0,0,0],m,H,H]],css(AXC[i]),pp.k[i],`host spring k_${AX[i]} = ${pp.k[i].toFixed(2)}`,5,0.06);
+    pushCoils([[[0,0,0],u.map(q=>q*H),0.06,0],[[0,0,0],m.map(q=>q*H),0.06,0]],css(AXC[i]),pp.r[i],`resonator spring r_${AX[i]} = ${pp.r[i].toFixed(2)}`,3,0.025)}
+  if(pp.g>0){const segs=[];for(const d of dirs)for(const sg of[1,-1]){const p=d.map(q=>q*sg);sites.push(p);segs.push([[0,0,0],p,H*1.3,H*1.3])}
+    pushCoils(segs,css("--sd"),pp.g,`diagonal spring g = ${pp.g.toFixed(2)}`,5,0.045)}
   sites.forEach((c,i)=>tr.push(boxMesh(c,H,css("--hostfill"),i?(i>6?0.18:0.35):0.22,"host mass m₁ = 1",i===0)));
-  tr.push({type:"scatter3d",mode:"markers",x:sites.map(p=>p[0]),y:sites.map(p=>p[1]),z:sites.map(p=>p[2]),name:`resonator μ = ${prm.mu.toFixed(2)}`,showlegend:true,
-    marker:{size:sites.map((_,i)=>i?5:9),color:css("--core")},hovertemplate:`resonator μ = ${prm.mu.toFixed(2)}<extra></extra>`});
+  tr.push({type:"scatter3d",mode:"markers",x:sites.map(p=>p[0]),y:sites.map(p=>p[1]),z:sites.map(p=>p[2]),name:`resonator μ = ${pp.mu.toFixed(2)}`,showlegend:true,
+    marker:{size:sites.map((_,i)=>i?5:9),color:css("--core")},hovertemplate:`resonator μ = ${pp.mu.toFixed(2)}<extra></extra>`});
   const ax=baseLayout()._axis,sc={bgcolor:css("--surface"),aspectmode:"cube"};
   for(const[a,l]of[["xaxis","x / a"],["yaxis","y / a"],["zaxis","z / a"]])sc[a]={...ax,title:{text:l},range:[-1.3,1.3],dtick:1,showbackground:false,showspikes:false};
-  if(first.cell)sc.camera={eye:{x:1.45,y:-1.3,z:0.85}};
+  if(!E._cam){sc.camera={eye};E._cam=1}
   const Lc=baseLayout();delete Lc._axis;
-  Plotly.react("pCell",tr,{...Lc,margin:{l:0,r:0,t:0,b:0},scene:sc,uirevision:"cell",showlegend:true,
-    legend:{x:0,y:1,bgcolor:"rgba(0,0,0,0)",font:{color:css("--fg2"),size:11}}},cfg);first.cell=false}
+  Plotly.react(E,tr,{...Lc,margin:{l:0,r:0,t:0,b:0},scene:sc,uirevision:"cell",showlegend:legend,
+    legend:{x:0,y:1,bgcolor:"rgba(0,0,0,0)",font:{color:css("--fg2"),size:11}}},cfg)}
 
 // ---- FEM result: Liu-type cell (voxel_fem.py, runs/liu) ----
 // k: grid indices (i,j,l) with 0 <= l <= j <= i <= n, k = (i,j,l)/n · π/a; f: 12 sorted frequencies in Hz;
@@ -649,7 +668,7 @@ const SB_STRONG={k:[0.3,1.7,0.1],r:[25,0.7,20],mu:2,s:0.15,g:0.8};
 let sbp={...SB_EX,k:[...SB_EX.k],r:[...SB_EX.r]};
 function sbBands(k,q,sym){const D=[[0,0,0],[0,0,0],[0,0,0]];
   for(let i=0;i<3;i++){const c=1-cos(k[i]);for(let a=0;a<3;a++)D[a][a]+=2*(i===a?q.k[i]:q.s*q.k[i])*c}
-  for(const d of sym?[[1,1,0],[1,-1,0]]:[[1,1,0]]){const c=2*q.g*(1-cos(d[0]*k[0]+d[1]*k[1]+d[2]*k[2])),n=d.map(v=>v/Math.SQRT2);
+  for(const d of sym==="all"?DIAG.map(o=>o.d):sym?[[1,1,0],[1,-1,0]]:[[1,1,0]]){const c=2*q.g*(1-cos(d[0]*k[0]+d[1]*k[1]+d[2]*k[2])),n=d.map(v=>v/Math.SQRT2);
     for(let a=0;a<3;a++)for(let b=0;b<3;b++)D[a][b]+=c*n[a]*n[b]}
   const sm=sqrt(q.mu),K=[...Array(6)].map(()=>Array(6).fill(0));
   for(let a=0;a<3;a++){for(let b=0;b<3;b++)K[a][b]=D[a][b];const r=q.r[a];K[a][a]+=r;K[a][a+3]=K[a+3][a]=-r/sm;K[a+3][a+3]=r/q.mu}
@@ -662,8 +681,8 @@ function sbClimb(f,k0,free,lo,hi,sgn){let k=[...k0],v=sgn*f(k),h=P/16;
   return{v:sgn*v,k}}
 const sbWhere=(k,lo,hi)=>{const m=[0,1,2].filter(i=>Math.abs(k[i]-lo[i])<1e-4||Math.abs(k[i]-hi[i])<1e-4).length;
   return["inside the volume","inside a face","on an edge (on the path)","at a corner (on the path)"][m]};
-function sbAnalyse(sym){
-  const lo=sym?[0,0,0]:[-P,0,0],hi=[P,P,P],B=k=>sbBands(k,sbp,sym),wide=a=>a===0&&!sym?2:1;
+function sbAnalyse(sym,q=sbp){
+  const lo=sym?[0,0,0]:[-P,0,0],hi=[P,P,P],B=k=>sbBands(k,q,sym),wide=a=>a===0&&!sym?2:1;
   const lin=(a,N)=>[...Array(N+1)].map((_,i)=>lo[a]+(hi[a]-lo[a])*i/N);
   const edges=[],faces=[],vol=[];
   for(let a=0;a<3;a++){const o=[0,1,2].filter(c=>c!==a);
@@ -679,6 +698,7 @@ function sbAnalyse(sym){
   return{R,lo,hi,B,wide}}
 function sbRenderCell(id,sym){
   const box=document.getElementById(id),A=sbAnalyse(sym),R=A.R,fg=css("--fg"),mut=css("--muted");
+  drawCell(box.querySelector(".sbcell"),sbp,sym?[[1,1,0],[1,-1,0]]:[[1,1,0]],false,{x:0.35,y:-0.45,z:2.1});
   const gv=R.vol.gap,ok=g=>Math.abs(g-gv)<1e-4*Math.max(1,Math.abs(gv));
   const pill=g=>gv<=0?`<span class="s">no gap</span>`:`<span class="pill ${ok(g)?"ok":"miss"}">${ok(g)?"✓ matches volume":"✕ "+(g>gv?"+":"")+pct(g,gv).toFixed(1)+"%"}</span>`;
   const gt=g=>g>0?g.toFixed(3):"none";
@@ -725,6 +745,40 @@ function sbRenderCell(id,sym){
     title:{text:`face ${nm[ax]} = ${fv<0?"−":""}${Math.abs(fv)<1e-9?"0":"π"} · bands 3 (colour) and 4 (grey)`,font:{size:13,color:fg},x:0.02,xanchor:"left"}},cfg);
   const kf=k=>"("+k.map(v=>(v/P).toFixed(3)).join(", ")+") π/a";
   box.querySelector(".readout").innerHTML=`Band 3 maximum: ω = ${R.vol.lo.v.toFixed(4)} at ${kf(km)}, ${sbWhere(km,A.lo,A.hi)}.<br>Highest point on the path: ω = ${R.path.lo.v.toFixed(4)} at ${kf(R.path.lo.k)}.<br>Band 4 minimum: ω = ${R.vol.hi.v.toFixed(4)} at ${kf(R.vol.hi.k)}.`}
+// 3D case: all six <110> pairs (the top-of-page model), slightly unequal springs -> band-3 top inside the volume
+const V3={k:[1,0.9,0.8],r:[2,2,2],mu:0.2,s:0.55,g:0.5};
+function renderV3(){
+  if(!window.Plotly)return;
+  const box=document.getElementById("sbVol"),A=sbAnalyse("all",V3),R=A.R,fg=css("--fg"),warn=css("--warn");
+  const gv=R.vol.gap,ok=g=>Math.abs(g-gv)<1e-4*Math.max(1,Math.abs(gv));
+  const pill=g=>`<span class="pill ${ok(g)?"ok":"miss"}">${ok(g)?"✓ matches volume":"✕ "+(g>gv?"+":"")+pct(g,gv).toFixed(1)+"%"}</span>`;
+  box.querySelector(".sbcells").innerHTML=`
+    <div class="cell"><span class="k">Gap · path</span><span class="v">${R.path.gap.toFixed(3)}</span>${pill(R.path.gap)}</div>
+    <div class="cell"><span class="k">Gap · faces</span><span class="v">${R.faces.gap.toFixed(3)}</span>${pill(R.faces.gap)}</div>
+    <div class="cell"><span class="k">Gap · volume</span><span class="v">${gv.toFixed(3)}</span><span class="s">ω ${R.vol.lo.v.toFixed(3)} – ${R.vol.hi.v.toFixed(3)}</span></div>`;
+  drawCell(box.querySelector(".sbcell"),V3,DIAG.map(o=>o.d),false);
+  // band 3 on a grid over the box, for the region above the face maximum
+  const N=22,t=[...Array(N+1)].map((_,i)=>P*i/N),X=[],Y=[],Z=[],W=[];
+  for(const a of t)for(const b of t)for(const c of t){X.push(a/P);Y.push(b/P);Z.push(c/P);W.push(sbBands([a,b,c],V3,"all")[2])}
+  const tr=[{type:"isosurface",x:X,y:Y,z:Z,value:W,isomin:R.faces.lo.v,isomax:R.vol.lo.v,surface:{count:3,fill:1},caps:{x:{show:false},y:{show:false},z:{show:false}},
+      colorscale:[[0,warn],[1,warn]],showscale:false,opacity:0.55,hovertemplate:"band 3 above every face point<br>ω = %{value:.4f}<extra></extra>"}];
+  const C=[[0,0,0],[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1]],ex=[],ey=[],ez=[];
+  for(let i=0;i<8;i++)for(let j=i+1;j<8;j++){if(C[i].reduce((s,v,c)=>s+Math.abs(v-C[j][c]),0)!==1)continue;
+    ex.push(C[i][0],C[j][0],null);ey.push(C[i][1],C[j][1],null);ez.push(C[i][2],C[j][2],null)}
+  tr.push({type:"scatter3d",mode:"lines",x:ex,y:ey,z:ez,line:{color:fg,width:5},hoverinfo:"skip"});
+  const vn=Object.keys(V);tr.push({type:"scatter3d",mode:"text",x:vn.map(n=>V[n][0]/P),y:vn.map(n=>V[n][1]/P),z:vn.map(n=>V[n][2]/P),text:vn,textposition:"top center",
+    textfont:{color:fg,size:15,family:"Newsreader, Georgia, serif"},hoverinfo:"skip"});
+  const km=R.vol.lo.k,kf=R.faces.lo.k;
+  tr.push({type:"scatter3d",mode:"markers",x:[km[0]/P],y:[km[1]/P],z:[km[2]/P],marker:{size:7,color:css("--seq3"),line:{color:fg,width:2}},
+    hovertemplate:`true maximum of band 3<br>ω = ${R.vol.lo.v.toFixed(4)}<extra></extra>`});
+  tr.push({type:"scatter3d",mode:"markers",x:[kf[0]/P],y:[kf[1]/P],z:[kf[2]/P],marker:{size:7,symbol:"circle-open",color:warn,line:{width:4}},
+    hovertemplate:`highest point on the faces<br>ω = ${R.faces.lo.v.toFixed(4)}<extra></extra>`});
+  const L=baseLayout(),ax=L._axis;delete L._axis;const sc={bgcolor:css("--surface"),aspectmode:"cube"};
+  for(const[a,l]of[["xaxis","kx"],["yaxis","ky"],["zaxis","kz"]])sc[a]={...ax,title:{text:l+" (π/a)"},range:[-0.05,1.1],dtick:0.5,showbackground:false,showspikes:false};
+  const el=box.querySelector(".sbbox");if(!el._cam){sc.camera={eye:{x:1.6,y:-1.35,z:0.9}};el._cam=1}
+  Plotly.react(el,tr,{...L,margin:{l:0,r:0,t:0,b:0},scene:sc,uirevision:"v3"},cfg);
+  const k3=k=>"("+k.map(v=>(v/P).toFixed(3)).join(", ")+") π/a";
+  box.querySelector(".readout").innerHTML=`Band 3 maximum: ω = ${R.vol.lo.v.toFixed(4)} at ${k3(km)}, ${sbWhere(km,A.lo,A.hi)}.<br>Highest point on the faces: ω = ${R.faces.lo.v.toFixed(4)} at ${k3(kf)}. Highest point on the path: ω = ${R.path.lo.v.toFixed(4)}.<br>Band 4 minimum: ω = ${R.vol.hi.v.toFixed(4)} at ${k3(R.vol.hi.k)}.`}
 function renderSB(){
   if(!window.Plotly)return;
   document.getElementById("sbG").value=sbp.g;document.getElementById("sbGo").textContent=sbp.g.toFixed(2);
@@ -858,7 +912,7 @@ for(const[v,t]of[["g0","Bands 1–3"],["g3","Bands 4–6"],["g6","Bands 7–9"],
 for(let b=0;b<12;b++){const o=document.createElement("option");o.value=b;o.textContent=`Band ${b+1}`;polBandSel.appendChild(o)}
 polBandSel.value="g0";
 
-const onTheme=()=>{schedule();requestAnimationFrame(renderFEM);sbSchedule()};
+const onTheme=()=>{schedule();requestAnimationFrame(renderFEM);sbSchedule();requestAnimationFrame(renderV3)};
 document.getElementById("bandSel").addEventListener("change",schedule);
 document.getElementById("polSel").addEventListener("change",schedule);
 document.getElementById("femSel").addEventListener("change",renderFEM);
@@ -871,4 +925,5 @@ new MutationObserver(onTheme).observe(document.documentElement,{attributes:true,
 loadPreset(PRESETS[0]);
 renderFEM();
 renderSB();
+renderV3();
 </script>
