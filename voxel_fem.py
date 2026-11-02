@@ -21,6 +21,7 @@ import json
 import math
 import os
 import sys
+import time
 from concurrent.futures import ProcessPoolExecutor
 
 import numpy as np
@@ -149,7 +150,12 @@ class Cell:
             solver.set_phase(33)
             op = LinearOperator(R.shape, dtype=float,
                                 matvec=lambda x: solver._call_pardiso(S, np.ascontiguousarray(x, dtype=float)).ravel())
-            w2, Z = eigsh(R, k=2 * nev, sigma=self.sigma, OPinv=op, which="LM")
+            try:
+                w2, Z = eigsh(R, k=2 * nev, sigma=self.sigma, OPinv=op, which="LM")
+            finally:
+                # PARDISO keeps its factorization in MKL-internal memory that is
+                # not garbage-collected: without this, ~0.5 GB leaks per k-point.
+                solver.free_memory(everything=True)
             o = np.argsort(w2)[::2]
             w2, Z = w2[o], Z[:, o]
             Y = Z[: self.ndof] + 1j * Z[self.ndof:]
@@ -202,18 +208,47 @@ def main(argv=None):
         for r in csv.DictReader(f):
             k = [float(r[c]) * math.pi / a[i] for i, c in enumerate(("ux", "uy", "uz"))]
             tasks.append((int(r["id"]), k, args.nev))
+    # Resume: k-points already in the output file are skipped, new ones appended.
+    # Each k-point is flushed to disk as soon as it is solved, so a crash loses
+    # at most the point being computed.
+    done_ids = set()
+    if os.path.exists(args.out) and os.path.getsize(args.out) > 0:
+        with open(args.out) as f:
+            for r in csv.DictReader(f):
+                if r.get("case") == case:
+                    done_ids.add(int(r["id"]))
+    todo = [t for t in tasks if t[0] not in done_ids]
     probe = Cell(cfg)
-    print(f"{case}: {probe.ndof} DOF, materials {probe.material_names}, {len(tasks)} k-points", file=sys.stderr)
-    del probe
-    with open(args.out, "w", newline="") as fo:
+    print(f"{case}: {probe.ndof} DOF, materials {probe.material_names}, "
+          f"{len(tasks)} k-points ({len(done_ids)} already done, {len(todo)} to go)", file=sys.stderr, flush=True)
+    if args.jobs == 1:
+        global _cell
+        _cell = probe  # solve in this process: no second copy of the cell in memory
+        results = map(_run, todo)
+        ex = None
+    else:
+        del probe
+        ex = ProcessPoolExecutor(args.jobs, initializer=_init, initargs=(cfg,))
+        results = ex.map(_run, todo, chunksize=1)
+    new_file = not done_ids
+    t0 = time.time()
+    with open(args.out, "w" if new_file else "a", newline="") as fo:
         w = csv.writer(fo)
-        w.writerow(["case", "id", "band", "freq", "px", "py", "pz"])
-        with ProcessPoolExecutor(args.jobs, initializer=_init, initargs=(cfg,)) as ex:
-            for done, (pid, fr, p) in enumerate(ex.map(_run, tasks, chunksize=4), 1):
+        if new_file:
+            w.writerow(["case", "id", "band", "freq", "px", "py", "pz"])
+        try:
+            for done, (pid, fr, p) in enumerate(results, 1):
                 for b in range(len(fr)):
                     w.writerow([case, pid, b + 1, f"{fr[b]:.6f}", *(f"{v:.4f}" for v in p[b])])
-                if done % 50 == 0 or done == len(tasks):
-                    print(f"  {done}/{len(tasks)}", file=sys.stderr)
+                fo.flush()
+                el = time.time() - t0
+                eta = el / done * (len(todo) - done)
+                print(f"  {len(done_ids) + done}/{len(tasks)}  ({el / 60:.1f} min, ~{eta / 60:.0f} min left)",
+                      file=sys.stderr, flush=True)
+        finally:
+            if ex:
+                ex.shutdown(cancel_futures=True)
+    print("finished", file=sys.stderr, flush=True)
 
 
 if __name__ == "__main__":
