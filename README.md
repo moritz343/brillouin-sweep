@@ -3,7 +3,10 @@
 Code, data and an interactive page for the question: when does the standard
 band diagram (k on the edges of the irreducible Brillouin zone) misjudge
 complete band gaps of 3D unit cells, and are the faces of the zone enough?
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23988706.svg)](https://doi.org/10.5281/zenodo.23988706)
+
 **Results so far: [FINDINGS.md](FINDINGS.md).** How to cite: [CITATION.cff](CITATION.cff).
+Archived on Zenodo: [10.5281/zenodo.23988706](https://doi.org/10.5281/zenodo.23988706) (always the latest version).
 
 | Path | What it is |
 |---|---|
