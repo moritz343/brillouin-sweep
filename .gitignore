@@ -6,3 +6,4 @@ __pycache__/
 # sweep outputs (large; keep results elsewhere or add selected ones explicitly)
 *.csv
 !cells/*.csv
+!data/**/*.csv
