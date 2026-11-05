@@ -1,0 +1,15 @@
+{
+  "title": "Band gaps beyond the band-diagram path in 3D unit cells: face nets, symmetry, and an open-source Floquet–Bloch voxel solver",
+  "upload_type": "software",
+  "version": "0.1.0",
+  "publication_date": "2026-11-05",
+  "creators": [
+    {"name": "Wenzel, Moritz"}
+  ],
+  "description": "<p>Code, data and an interactive page for a study of when the standard band diagram (wavevectors on the edges of the irreducible Brillouin zone) misjudges complete band gaps of 3D periodic unit cells, and whether sampling the faces of the zone (drawn as an unfolded net) is enough.</p><p>Contents: an open-source Floquet–Bloch voxel FEM solver (voxel_fem.py) with crash-safe, resumable sweeps; k-point generators for path, faces, volume and polar sweeps; an analysis script comparing gaps found on path, faces and volume; FEM results for a Liu-type locally resonant cubic cell; scripts for a 3D mass-in-mass spring model; and an interactive HTML page.</p><p>Main observations (see FINDINGS.md): in the spring model the gap edges leave the path when mirror symmetry is broken or polarisations mix; band maxima then lie on mirror-plane faces of the zone or, if no face is a mirror plane (triclinic case), mostly inside the volume. Rule of thumb: faces suffice when all faces of the irreducible zone are mirror planes. This is a working record from one model family plus one FEM cell, not a peer-reviewed result.</p>",
+  "license": "MIT",
+  "keywords": ["phononic crystals", "acoustic metamaterials", "locally resonant metamaterials", "Floquet-Bloch", "band structure", "Brillouin zone", "band gap", "finite element method"],
+  "related_identifiers": [
+    {"identifier": "https://github.com/moritz343/brillouin-sweep", "relation": "isSupplementTo", "resource_type": "software"}
+  ]
+}

@@ -84,6 +84,18 @@ select{font:13px var(--body);color:var(--fg);background:var(--surface);border:1p
 .prose a{color:var(--sx)}
 .fem{display:flex;flex-direction:column;gap:18px;padding-top:18px;border-top:1px solid var(--line)}
 .femtitle{font-size:clamp(22px,3vw,30px);line-height:1.15}
+.sbctl{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center}
+.sbctl .row{min-width:260px;flex:1 1 260px;max-width:420px}
+.sbctl .hint{flex:1 1 100%}
+.sbgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.sbcells{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.sb .cell{padding:10px 12px}
+.sb .cell .v{font-size:17px}
+.sbplot{min-height:420px}
+.sbcell{min-height:300px}
+.sbbox{min-height:420px}
+.sbwide{margin-top:6px}
+@media (max-width:860px){.sbgrid{grid-template-columns:1fr}}
 @media (max-width:860px){.plots,.setup{grid-template-columns:1fr}.plots .big{grid-row:auto}.big .plot{min-height:460px}.setup .plot{min-height:340px}}
 </style>
 
@@ -151,7 +163,7 @@ select{font:13px var(--body);color:var(--fg);background:var(--surface);border:1p
         <li><b>Three resonances:</b> on a fixed host, the resonator would ring at √(r<sub>x</sub>/μ), √(r<sub>y</sub>/μ) and √(r<sub>z</sub>/μ). Each one opens a gap for waves whose motion is along that axis, and a <b>complete</b> gap exists only where all three overlap.</li>
         <li><b>Anisotropy:</b> the surfaces show how the slope (group velocity) changes with direction across every face, which the line plot only shows along the 12 edges.</li>
         <li><b>Crossings and avoided crossings:</b> without coupling (g = 0), sheets for different directions of motion pass through each other. With diagonal springs, crossings between the two in-plane motions on a face open into avoided crossings, and the colour blends smoothly from one motion to the other. Crossings with the out-of-plane motion stay exact because the face is a mirror plane.</li>
-        <li><b>Where the band edges sit:</b> in all the examples here, the complete gap opens between a corner (R) and Γ, so the path, the faces and the volume agree. The surface view earns its keep on the crossings, not on the gap.</li>
+        <li><b>Where the band edges sit:</b> in all the examples here, the complete gap opens between a corner (R) and Γ, so the path, the faces and the volume agree. For this symmetric lattice that is mostly no accident (see the comparison below). Here the surface view earns its keep on the crossings. To see a gap edge move into a face, the mirror symmetry has to be broken.</li>
       </ul>
     </section>
     <section><h2>Model</h2>
@@ -159,12 +171,99 @@ select{font:13px var(--body);color:var(--fg);background:var(--surface);border:1p
     </section>
   </div>
 
+  <section class="fem sb" id="symmetry">
+    <header class="lede">
+      <span class="eyebrow">Analytic model · symmetric vs symmetry-broken cell</span>
+      <h2 class="femtitle">When the faces matter: remove one diagonal spring</h2>
+      <p>Two cells that differ in one spring. On the left, each host has both diagonal springs in the x–y plane, along (1,1,0) and its mirror image (1,−1,0). On the right, the mirror partner is missing, so only the (1,1,0) spring is left, as in a sheared cell. Everything else is identical. Without the mirror partner, the irreducible zone doubles to −π ≤ k<sub>x</sub> ≤ π, and the standard path is the 12 edges of that larger box.</p>
+    </header>
+    <div class="panel sbctl">
+      <div class="row"><label for="sbG"><i class="dot" style="background:var(--sd)"></i>g</label><input type="range" id="sbG" min="0" max="2.5" step="0.05"><output id="sbGo" for="sbG"></output></div>
+      <div class="presets"><button type="button" id="sbPreEx" aria-pressed="true">Both cells have a gap</button><button type="button" id="sbPreStrong" aria-pressed="false">Strongest dome</button>
+        <label class="hint" style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" id="sbB4" checked> show band 4</label></div>
+      <p class="hint" id="sbParams"></p>
+    </div>
+    <div class="sbgrid">
+      <div class="plotcard" id="sbSym">
+        <div class="head"><h2>Symmetric: both diagonals</h2></div>
+        <div class="plot sbcell"></div>
+        <p class="hint">Seen from above. Diagonal springs (purple) to all four neighbours in the x–y plane, along ±(1,1,0) and ±(1,−1,0).</p>
+        <div class="sbcells"></div>
+        <div class="plot sbplot"></div>
+        <p class="readout"></p>
+      </div>
+      <div class="plotcard" id="sbAsym">
+        <div class="head"><h2>Symmetry broken: only (1,1,0)</h2></div>
+        <div class="plot sbcell"></div>
+        <p class="hint">Seen from above. Diagonal springs (purple) only to the two neighbours along ±(1,1,0). The ±(1,−1,0) pair is gone.</p>
+        <div class="sbcells"></div>
+        <div class="plot sbplot"></div>
+        <p class="readout"></p>
+      </div>
+    </div>
+    <div class="plotcard sbwide" id="sbVol">
+      <div class="head"><h2>3D case: the maximum sits inside the volume</h2></div>
+      <p class="hint">A fully mirror-symmetric cell, the lattice model at the top of this page with all six ⟨110⟩ diagonal pairs and slightly unequal springs: k = (1, 0.9, 0.8), s = 0.55, g = 0.5, r = (2, 2, 2), μ = 0.2. Here the diagonal springs mix all three directions of motion, and the top of band 3 moves off every face into the interior of the zone. Even the faces miss it, and only the volume search finds the true gap.</p>
+      <div class="sbcells"></div>
+      <div class="sbgrid">
+        <div><div class="plot sbcell"></div><p class="hint">Unit cell: axial springs to the six nearest neighbours, diagonal springs to all twelve ⟨110⟩ neighbours, and the resonator inside.</p></div>
+        <div><div class="plot sbplot"></div><p class="hint">The six faces unfolded, as in the net at the top of the page: bands 3 and 4, coloured by direction of motion, with the path in black and the grey plane at the path maximum. Nothing on the faces reaches the true maximum.</p></div>
+      </div>
+      <div class="sbgrid">
+        <div><div class="plot sbbox"></div><p class="hint">The irreducible box in k-space. Black: its 12 edges, the standard path. Orange: the region inside the box where band 3 is higher than anywhere on the six faces. It lies in the interior, off every face and edge. ● true maximum, ○ highest point on the faces. Drag to rotate.</p></div>
+      </div>
+      <p class="readout"></p>
+    </div>
+    <p class="hint">Each plot is the unfolded net of all six faces of the irreducible box, as at the top of the page: band 3 (below the gap) and band 4 (above it) as sheets, coloured by direction of motion. The black lines are the 12 box edges, the standard path. Band 4 is drawn see-through. The grey plane sits at the height of the highest point the path finds (○). In the symmetric cell nothing on the faces rises above it. In the symmetry-broken cell, whose net is twice as wide because k<sub>x</sub> runs from −π to π (primes mark k<sub>x</sub> = −π), band 3 pushes through the plane in the middle of a face, up to the true maximum ●. Drag to rotate.</p>
+    <div class="panel prose">
+      <h2>Why the faces are needed here</h2>
+      <p><b>Symmetric cell: the corners usually win.</b> Every diagonal entry of the dynamical matrix is built from cos k<sub>x</sub>, cos k<sub>y</sub> and cos k<sub>z</sub>, and is linear in each of them separately. The two mirror-image diagonal springs enter as a pair, and cos(k<sub>x</sub>+k<sub>y</sub>) + cos(k<sub>x</sub>−k<sub>y</sub>) = 2 cos k<sub>x</sub> cos k<sub>y</sub>, which keeps that structure. Without diagonal springs the directions of motion are independent, each band depends monotonically on one such function, and a function that is linear in each coordinate has its extremes at the corners of a box. So the gap edges sit on the path, and that part is a proof. Diagonal springs also couple the directions of motion, through terms like 2g sin k<sub>x</sub> sin k<sub>y</sub>, and then the proof no longer holds. In 206 random symmetric cells with a gap, both edges were at a corner every time. There is an exception, though: in a narrow window (nearly equal springs, s ≈ 0.6, g ≈ k/2) all three directions mix along the body diagonal and the top of the band moves inside the zone. For k = (1, 1, 1) it sits on Γ R at 0.685 π/a, 2.2 % above anything on the faces (on the path of a cubic lattice, but inside the volume of this box). For k = (1, 0.8, 0.6) it sits at (0.72, 0.66, 0.54) π/a, 0.4 % above the faces, so here even the faces miss it.</p>
+      <p><b>Broken symmetry: a maximum inside the face.</b> Without the partner, the term cos(k<sub>x</sub>+k<sub>y</sub>) stands alone. It is largest along the line k<sub>x</sub> + k<sub>y</sub> = π, which crosses the faces diagonally instead of running along their edges. Along k<sub>x</sub> = k<sub>y</sub> = t (with k<sub>x</sub> = k<sub>y</sub> = k springs), the mode polarised along (1,1,0) is exact, and its stiffness is 2(1+s)k(1 − cos t) + 2g(1 − cos 2t). This has a maximum inside the face as soon as <b>g &gt; (1+s)k/4</b>, at cos t = −(1+s)k/(4g). Once that interior maximum is higher than everything on the edges, the path underestimates the top of band 3 and overestimates the gap.</p>
+      <p><b>How often, and how much.</b> In 164 random symmetry-broken cells with a gap, the lower gap edge lay inside a face in 26 %. The faces gave the correct gap every time, so no case needed the volume. How large the error is depends on the resonators. When the resonator springs are softer than the host, the resonance flattens the bands below the gap and the difference shrinks to about 0.1 % of the frequency. When the resonator springs are stiff, as in this example, band 3 is an ordinary host wave and keeps its bulge. Here the path overestimates the gap by about 16 %.</p>
+      <p><b>Caveat.</b> The "path" here is the 12 edges of the irreducible box. For a real monoclinic or triclinic crystal, the standard path of Setyawan &amp; Curtarolo is different, and the comparison should be repeated with it. The mechanism matches the 2D finding of Maurin et al. (2018) that the contour fails mainly for low-symmetry cells.</p>
+    </div>
+    <div class="panel prose" id="classify">
+      <h2>Which symmetries make the faces enough?</h2>
+      <p><b>What symmetry guarantees.</b> Two facts hold for every band. First, time reversal gives ω(k) = ω(−k). At the eight points where k and −k are the same point of the zone (the corners of the box), the gradient of every band is zero, so these are always critical points. Second, on a mirror plane in k-space the derivative perpendicular to the plane is zero. A band restricted to that plane then needs only two more conditions to have a critical point there, and on a two-fold or higher rotation axis only one. On a face of the irreducible zone that is <i>not</i> a mirror plane, nothing is zero by symmetry. A maximum would have to land there by coincidence, so in practice it does not. Maxima therefore sit at the corners, on symmetry lines, on mirror planes, or in general position inside the volume.</p>
+      <p><b>The test.</b> Three versions of the spring model, from full to no mirror symmetry, each with random parameters:</p>
+      <div class="tablewrap"><table aria-label="Where the band-3 maximum sits for three symmetry classes">
+        <thead><tr><th>Cell</th><th>Laue class</th><th>IBZ faces that are mirror planes</th><th>Max. on a non-mirror face</th><th>Max. inside the volume</th><th>Faces wrong by &gt; 1 %</th></tr></thead>
+        <tbody>
+          <tr><td>All six ⟨110⟩ pairs (top of page)</td><td class="num">mmm</td><td>all 6</td><td>–</td><td>only in a narrow window (3D case above)</td><td class="num">0 of 206</td></tr>
+          <tr><td>Only (1,1,0)</td><td class="num">2/m</td><td>2 of 6 (k<sub>z</sub> = 0, π)</td><td class="num">0 of 311</td><td class="num">0 of 311</td><td class="num">0 of 311</td></tr>
+          <tr><td>Only (1,1,0), (0,1,1), (1,0,1)</td><td class="num">−1</td><td>none</td><td>–</td><td class="num">108 of 195</td><td class="num">47 of 195 (up to 92 %)</td></tr>
+        </tbody></table></div>
+      <p>In the monoclinic cell every maximum that left the path landed on one of the two mirror faces. None ever sat on the four faces that are not mirror planes. In the triclinic cell no face is a mirror plane, and more than half of the maxima sit inside the volume. So breaking symmetry does not automatically defeat the faces. What matters is whether the faces of the irreducible zone are still mirror planes.</p>
+      <p><b>A rule of thumb by Laue class</b> (for primitive lattices):</p>
+      <div class="tablewrap"><table aria-label="Which IBZ faces are mirror planes, by Laue class">
+        <thead><tr><th>Laue class</th><th>System</th><th>IBZ faces in mirror planes</th><th>What to sample</th></tr></thead>
+        <tbody>
+          <tr><td class="num">−1</td><td>triclinic</td><td>none</td><td>the volume</td></tr>
+          <tr><td class="num">−3</td><td>trigonal</td><td>none</td><td>the volume</td></tr>
+          <tr><td class="num">2/m</td><td>monoclinic</td><td>the two faces perpendicular to the unique axis</td><td>those faces + the volume</td></tr>
+          <tr><td class="num">4/m, 6/m</td><td>tetragonal, hexagonal</td><td>the two faces perpendicular to the main axis</td><td>those faces + the volume</td></tr>
+          <tr><td class="num">−3m, m−3</td><td>trigonal, cubic</td><td>some of them</td><td>the mirror faces + the volume</td></tr>
+          <tr><td class="num">mmm, 4/mmm, 6/mmm, m−3m</td><td>orthorhombic, tetragonal, hexagonal, cubic</td><td>all</td><td>the faces (the volume only by accident)</td></tr>
+        </tbody></table></div>
+      <p>The last row are the Laue classes generated entirely by mirrors. Their irreducible zone is bounded only by mirror planes, so the "natural homes" of band extrema are exactly its faces, edges and corners. For centred lattices (face-centred, body-centred and so on), part of the zone boundary is not a mirror plane even in these classes and has to be checked case by case.</p>
+      <p><b>What this does not prove.</b> Symmetry only says where the gradient has to vanish. It never forbids an extra critical point in general position. The 3D case above is such an accident in an mmm cell: nearly equal springs put the maximum close to the body diagonal, which is a symmetry axis only for exactly cubic springs. The table is evidence from one family of spring models, not a theorem, and it should be repeated with FEM cells of each class.</p>
+    </div>
+  </section>
+
   <section class="fem" id="fem">
     <header class="lede">
       <span class="eyebrow">Finite-element result · own voxel FEM · 84 grid + 145 polar k-points</span>
       <h2 class="femtitle">First real unit cell: a Liu-type locally resonant cube</h2>
       <p>A lead sphere (r = 5 mm) with a 2.5 mm silicone coating, embedded in epoxy on a simple cubic lattice, a = 15.5 mm, after Liu et al. (<i>Science</i> 289, 2000). Computed with the open-source Floquet–Bloch voxel solver from this project: 16³ voxels, 12 bands at every point of a 6-step grid over the whole irreducible zone. For a cubic lattice that zone is the tetrahedron Γ X M R, so its boundary is four triangles instead of six rectangles.</p>
     </header>
+    <div class="sbgrid">
+      <div class="plotcard"><div class="head"><h2>The unit cell</h2></div>
+        <div class="plot" id="liuCell" style="min-height:360px"></div>
+        <p class="hint">Epoxy cube with a = 15.5 mm. Inside is a silicone shell (outer radius 7.5 mm, drawn with one quarter cut away) and the lead core (radius 5 mm) at its centre. Along the cube axes only 0.5 mm of epoxy separates the shells of neighbouring cells. Drag to rotate.</p></div>
+      <div class="plotcard"><div class="head"><h2>What the solver sees: 16³ voxels</h2></div>
+        <svg id="liuVox" viewBox="0 0 360 360" role="img" aria-label="Mid-plane cut through the 16 by 16 by 16 voxel model of the Liu cell" style="width:100%;max-width:400px;height:auto;align-self:center"></svg>
+        <p class="hint" id="liuVoxHint"></p></div>
+    </div>
     <div class="verdict" id="femVerdict"></div>
     <div class="plots">
       <div class="plotcard big">
@@ -187,8 +286,9 @@ select{font:13px var(--body);color:var(--fg);background:var(--surface);border:1p
     </div>
     <div class="plotcard">
       <div class="head"><h2>Polar view: the three faces through Γ</h2>
-        <div class="presets"><select id="polMode" aria-label="Polar view mode"><option value="map">Band map: frequency over direction and |k|</option><option value="speed">Sound speed near Γ (bands 1–3)</option></select>
-          <select id="polBand" aria-label="Band for the polar map"></select></div></div>
+        <div class="presets"><select id="polMode" aria-label="Polar view mode"><option value="funnel">3D funnel: frequency as height</option><option value="map">Flat map: frequency as colour</option><option value="speed">Sound speed near Γ (bands 1–3)</option></select>
+          <select id="polBand" aria-label="Band for the polar map"></select>
+          <select id="polRad" aria-label="Radial scale"><option value="sqrt">Radius ∝ √|k| (stretched near Γ)</option><option value="lin">Radius ∝ |k| (true scale)</option></select></div></div>
       <div class="plot" id="pPolar" style="min-height:400px"></div>
       <p class="hint" id="polHint"></p>
     </div>
@@ -272,6 +372,8 @@ const PRESETS=[
    k:[1,0.5,0.25],r:[0.3,0.5,0.8],mu:2,s:0.3,g:0},
   {id:"iso",label:"All directions equal",note:"Equal springs everywhere: a simple cubic lattice. The three directions of motion share one resonance, so the complete gap is as wide as it can be.",
    k:[1,1,1],r:[0.5,0.5,0.5],mu:2,s:0.3,g:0},
+  {id:"volume",label:"Maximum inside the volume",note:"Nearly equal springs with s = 0.55 and g = 0.5: the diagonal springs mix all three directions of motion, and the top of band 3 moves into the interior of the zone. The path and even the faces overestimate the gap. See the 3D case further down.",
+   k:[1,0.9,0.8],r:[2,2,2],mu:0.2,s:0.55,g:0.5},
   {id:"chains",label:"No sideways stiffness",note:"s = 0 and g = 0: motion along x only feels the x-springs, so each direction is an independent 1D chain. Every sheet is flat in two directions of k.",
    k:[1,0.5,0.25],r:[0.3,0.5,0.8],mu:2,s:0,g:0}];
 
@@ -474,25 +576,25 @@ function coil(p0,p1,trim0,trim1,turns,amp){const d=p1.map((v,i)=>v-p0[i]),L=sqrt
 function boxMesh(c,h,color,opacity,name,show){const x=[],y=[],z=[];
   for(const sx of[-1,1])for(const sy of[-1,1])for(const sz of[-1,1]){x.push(c[0]+sx*h);y.push(c[1]+sy*h);z.push(c[2]+sz*h)}
   return{type:"mesh3d",x,y,z,alphahull:0,color,opacity,flatshading:true,name,showlegend:show,hoverinfo:"name",lighting:{ambient:0.8,diffuse:0.4}}}
-function drawCell(){const fg=css("--fg"),tr=[],H=0.24,maxc=Math.max(...prm.k,...prm.r,prm.g);
+function drawCell(el="pCell",pp=null,dirs=DIAG.map(o=>o.d),legend=true,eye={x:1.45,y:-1.3,z:0.85}){pp=pp||prm;const E=typeof el==="string"?document.getElementById(el):el;const fg=css("--fg"),tr=[],H=0.24,maxc=Math.max(...pp.k,...pp.r,pp.g);
   const sites=[[0,0,0]];for(let i=0;i<3;i++)for(const s of[1,-1]){const p=[0,0,0];p[i]=s;sites.push(p)}
   const pushCoils=(segs,color,c,name,turns,amp)=>{const xs=[],ys=[],zs=[];
     for(const[p0,p1,t0,t1]of segs){for(const p of coil(p0,p1,t0,t1,turns,amp)){xs.push(p[0]);ys.push(p[1]);zs.push(p[2])}xs.push(null);ys.push(null);zs.push(null)}
     tr.push({type:"scatter3d",mode:"lines",x:xs,y:ys,z:zs,name,showlegend:true,hoverinfo:"name",line:{color,width:1.5+6*c/maxc}})};
   for(let i=0;i<3;i++){const u=[0,0,0];u[i]=1;const m=u.map(q=>-q);
-    pushCoils([[[0,0,0],u,H,H],[[0,0,0],m,H,H]],css(AXC[i]),prm.k[i],`host spring k_${AX[i]} = ${prm.k[i].toFixed(2)}`,5,0.06);
-    pushCoils([[[0,0,0],u.map(q=>q*H),0.06,0],[[0,0,0],m.map(q=>q*H),0.06,0]],css(AXC[i]),prm.r[i],`resonator spring r_${AX[i]} = ${prm.r[i].toFixed(2)}`,3,0.025)}
-  if(prm.g>0){const segs=[];for(const{d}of DIAG)for(const sg of[1,-1]){const p=d.map(q=>q*sg);sites.push(p);segs.push([[0,0,0],p,H*1.3,H*1.3])}
-    pushCoils(segs,css("--sd"),prm.g,`diagonal spring g = ${prm.g.toFixed(2)}`,5,0.045)}
+    pushCoils([[[0,0,0],u,H,H],[[0,0,0],m,H,H]],css(AXC[i]),pp.k[i],`host spring k_${AX[i]} = ${pp.k[i].toFixed(2)}`,5,0.06);
+    pushCoils([[[0,0,0],u.map(q=>q*H),0.06,0],[[0,0,0],m.map(q=>q*H),0.06,0]],css(AXC[i]),pp.r[i],`resonator spring r_${AX[i]} = ${pp.r[i].toFixed(2)}`,3,0.025)}
+  if(pp.g>0){const segs=[];for(const d of dirs)for(const sg of[1,-1]){const p=d.map(q=>q*sg);sites.push(p);segs.push([[0,0,0],p,H*1.3,H*1.3])}
+    pushCoils(segs,css("--sd"),pp.g,`diagonal spring g = ${pp.g.toFixed(2)}`,5,0.045)}
   sites.forEach((c,i)=>tr.push(boxMesh(c,H,css("--hostfill"),i?(i>6?0.18:0.35):0.22,"host mass m₁ = 1",i===0)));
-  tr.push({type:"scatter3d",mode:"markers",x:sites.map(p=>p[0]),y:sites.map(p=>p[1]),z:sites.map(p=>p[2]),name:`resonator μ = ${prm.mu.toFixed(2)}`,showlegend:true,
-    marker:{size:sites.map((_,i)=>i?5:9),color:css("--core")},hovertemplate:`resonator μ = ${prm.mu.toFixed(2)}<extra></extra>`});
+  tr.push({type:"scatter3d",mode:"markers",x:sites.map(p=>p[0]),y:sites.map(p=>p[1]),z:sites.map(p=>p[2]),name:`resonator μ = ${pp.mu.toFixed(2)}`,showlegend:true,
+    marker:{size:sites.map((_,i)=>i?5:9),color:css("--core")},hovertemplate:`resonator μ = ${pp.mu.toFixed(2)}<extra></extra>`});
   const ax=baseLayout()._axis,sc={bgcolor:css("--surface"),aspectmode:"cube"};
   for(const[a,l]of[["xaxis","x / a"],["yaxis","y / a"],["zaxis","z / a"]])sc[a]={...ax,title:{text:l},range:[-1.3,1.3],dtick:1,showbackground:false,showspikes:false};
-  if(first.cell)sc.camera={eye:{x:1.45,y:-1.3,z:0.85}};
+  if(!E._cam){sc.camera={eye};E._cam=1}
   const Lc=baseLayout();delete Lc._axis;
-  Plotly.react("pCell",tr,{...Lc,margin:{l:0,r:0,t:0,b:0},scene:sc,uirevision:"cell",showlegend:true,
-    legend:{x:0,y:1,bgcolor:"rgba(0,0,0,0)",font:{color:css("--fg2"),size:11}}},cfg);first.cell=false}
+  Plotly.react(E,tr,{...Lc,margin:{l:0,r:0,t:0,b:0},scene:sc,uirevision:"cell",showlegend:legend,
+    legend:{x:0,y:1,bgcolor:"rgba(0,0,0,0)",font:{color:css("--fg2"),size:11}}},cfg)}
 
 // ---- FEM result: Liu-type cell (voxel_fem.py, runs/liu) ----
 // k: grid indices (i,j,l) with 0 <= l <= j <= i <= n, k = (i,j,l)/n · π/a; f: 12 sorted frequencies in Hz;
@@ -596,6 +698,192 @@ function renderFEM(){
 }
 first.fem=true;
 
+// ---- symmetric vs symmetry-broken cell (both xy diagonals vs only (1,1,0)) ----
+const SB_EX={k:[0.8,1.3,0.6],r:[10,2.5,8],mu:0.6,s:0.6,g:1.6};
+// found by optimising the height of the interior maximum above the path's, with a gap of at least 5 %
+const SB_STRONG={k:[0.3,1.7,0.1],r:[25,0.7,20],mu:2,s:0.15,g:0.8};
+let sbp={...SB_EX,k:[...SB_EX.k],r:[...SB_EX.r]};
+function sbModes(k,q,sym){const D=[[0,0,0],[0,0,0],[0,0,0]];
+  for(let i=0;i<3;i++){const c=1-cos(k[i]);for(let a=0;a<3;a++)D[a][a]+=2*(i===a?q.k[i]:q.s*q.k[i])*c}
+  for(const d of sym==="all"?DIAG.map(o=>o.d):sym?[[1,1,0],[1,-1,0]]:[[1,1,0]]){const c=2*q.g*(1-cos(d[0]*k[0]+d[1]*k[1]+d[2]*k[2])),n=d.map(v=>v/Math.SQRT2);
+    for(let a=0;a<3;a++)for(let b=0;b<3;b++)D[a][b]+=c*n[a]*n[b]}
+  const sm=sqrt(q.mu),K=[...Array(6)].map(()=>Array(6).fill(0));
+  for(let a=0;a<3;a++){for(let b=0;b<3;b++)K[a][b]=D[a][b];const r=q.r[a];K[a][a]+=r;K[a][a+3]=K[a+3][a]=-r/sm;K[a+3][a+3]=r/q.mu}
+  const{w,V:E}=eigSym(K),idx=w.map((_,i)=>i).sort((a,b)=>w[a]-w[b]);
+  return{w:idx.map(i=>sqrt(Math.max(w[i],0))),pol:idx.map(i=>{const f=[0,1,2].map(a=>E[a][i]**2+E[a+3][i]**2),t=f[0]+f[1]+f[2];return f.map(v=>v/t)})}}
+const sbBands=(k,q,sym)=>sbModes(k,q,sym).w;
+function sbClimb(f,k0,free,lo,hi,sgn){let k=[...k0],v=sgn*f(k),h=P/16;
+  while(h>1e-6){let moved=false;
+    for(const c of free)for(const s of[1,-1]){const t=[...k];t[c]=Math.min(hi[c],Math.max(lo[c],t[c]+s*h));if(t[c]===k[c])continue;
+      const vt=sgn*f(t);if(vt>v+1e-13){k=t;v=vt;moved=true}}
+    if(!moved)h/=2}
+  return{v:sgn*v,k}}
+const sbWhere=(k,lo,hi)=>{const m=[0,1,2].filter(i=>Math.abs(k[i]-lo[i])<1e-4||Math.abs(k[i]-hi[i])<1e-4).length;
+  return["inside the volume","inside a face","on an edge (on the path)","at a corner (on the path)"][m]};
+function sbAnalyse(sym,q=sbp){
+  const lo=sym?[0,0,0]:[-P,0,0],hi=[P,P,P],B=k=>sbBands(k,q,sym),wide=a=>a===0&&!sym?2:1;
+  const lin=(a,N)=>[...Array(N+1)].map((_,i)=>lo[a]+(hi[a]-lo[a])*i/N);
+  const edges=[],faces=[],vol=[];
+  for(let a=0;a<3;a++){const o=[0,1,2].filter(c=>c!==a);
+    for(const va of[lo[o[0]],hi[o[0]]])for(const vb of[lo[o[1]],hi[o[1]]])for(const x of lin(a,32*wide(a))){const k=[0,0,0];k[a]=x;k[o[0]]=va;k[o[1]]=vb;edges.push({k,free:[a]})}
+    for(const va of[lo[a],hi[a]])for(const x of lin(o[0],12*wide(o[0])))for(const y of lin(o[1],12*wide(o[1]))){const k=[0,0,0];k[a]=va;k[o[0]]=x;k[o[1]]=y;faces.push({k,free:o})}}
+  for(const x of lin(0,8*wide(0)))for(const y of lin(1,8))for(const z of lin(2,8))vol.push({k:[x,y,z],free:[0,1,2]});
+  for(const s of[...edges,...faces,...vol])s.w=B(s.k);
+  const best=(set,b,sgn)=>{let j=set[0];for(const s of set)if(sgn*s.w[b]>sgn*j.w[b])j=s;return sbClimb(k=>B(k)[b],j.k,j.free,lo,hi,sgn)};
+  const R={};
+  for(const[d,set]of[["path",edges],["faces",[...edges,...faces]],["vol",[...edges,...faces,...vol]]])R[d]={lo:best(set,2,1),hi:best(set,3,-1)};
+  for(const[a,b]of[["faces","path"],["vol","faces"]]){if(R[b].lo.v>R[a].lo.v)R[a].lo=R[b].lo;if(R[b].hi.v<R[a].hi.v)R[a].hi=R[b].hi}
+  for(const d in R)R[d].gap=R[d].hi.v-R[d].lo.v;
+  return{R,lo,hi,B,wide}}
+// Unfolded net of the six faces of an IBZ box [lo, hi], like the net at the top of the page:
+// k_z = lo face in the middle, the other five folded out around it. Bands 3 and 4 as sheets,
+// coloured by direction of motion; black lines = the 12 box edges (the path); orange plane = path maximum.
+function sbNet(el,A,R,q,sym,shown=[2,3]){
+  const lo=A.lo,hi=A.hi,Ls=[0,1,2].map(i=>(hi[i]-lo[i])/P),fg=css("--fg"),rgb=AXC.map(css).map(hexRgb);
+  const FN=[
+    {k:(s,t)=>[s,t,0],n:(s,t)=>[s*Ls[0],t*Ls[1]],d:[0,1]},
+    {k:(s,t)=>[s,0,t],n:(s,t)=>[s*Ls[0],-t*Ls[2]],d:[0,2]},
+    {k:(s,t)=>[0,s,t],n:(s,t)=>[-t*Ls[2],s*Ls[1]],d:[1,2]},
+    {k:(s,t)=>[1,s,t],n:(s,t)=>[Ls[0]+t*Ls[2],s*Ls[1]],d:[1,2]},
+    {k:(s,t)=>[s,1,t],n:(s,t)=>[s*Ls[0],Ls[1]+t*Ls[2]],d:[0,2]},
+    {k:(s,t)=>[s,t,1],n:(s,t)=>[s*Ls[0],Ls[1]+Ls[2]+(1-t)*Ls[1]],d:[0,1]}];
+  const kAt=f=>f.map((v,i)=>lo[i]+v*(hi[i]-lo[i]));
+  const pts=[],I=[],J=[],K=[],edges=[];
+  FN.forEach(fc=>{const ns=Math.round(14*Ls[fc.d[0]]),nt=Math.round(14*Ls[fc.d[1]]),base=pts.length;
+    for(let i=0;i<=ns;i++)for(let j=0;j<=nt;j++){const sv=i/ns,tv=j/nt,k=kAt(fc.k(sv,tv)),m=sbModes(k,q,sym);pts.push({n:fc.n(sv,tv),k,w:m.w,pol:m.pol})}
+    const id=(i,j)=>base+i*(nt+1)+j;
+    for(let i=0;i<ns;i++)for(let j=0;j<nt;j++){I.push(id(i,j),id(i,j));J.push(id(i+1,j),id(i+1,j+1));K.push(id(i+1,j+1),id(i,j+1))}
+    edges.push([...Array(ns+1).keys()].map(i=>id(i,0)),[...Array(nt+1).keys()].map(j=>id(ns,j)),[...Array(ns+1).keys()].map(i=>id(i,nt)),[...Array(nt+1).keys()].map(j=>id(0,j)))});
+  const X=pts.map(p=>p.n[0]),Y=pts.map(p=>p.n[1]),kTxt=k=>"("+k.map(v=>(v/P).toFixed(3)).join(", ")+") π/a";
+  const tr=[];
+  for(const b of shown){
+    tr.push({type:"mesh3d",x:X,y:Y,z:pts.map(p=>p.w[b]),i:I,j:J,k:K,vertexcolor:pts.map(p=>polColor(p.pol[b],rgb)),opacity:shown.length>1&&b===shown[shown.length-1]?0.4:1,
+      lighting:{ambient:0.7,diffuse:0.55,specular:0.05,roughness:0.9},customdata:pts.map(p=>kTxt(p.k)+"<br>"+polTxt(p.pol[b])),
+      hovertemplate:`band ${b+1}<br>ω = %{z:.4f}<br>k = %{customdata}<extra></extra>`});
+    const ex=[],ey=[],ez=[];for(const line of edges){for(const n of line){ex.push(X[n]);ey.push(Y[n]);ez.push(pts[n].w[b]+0.004)}ex.push(null);ey.push(null);ez.push(null)}
+    tr.push({type:"scatter3d",mode:"lines",x:ex,y:ey,z:ez,line:{color:fg,width:3},hoverinfo:"skip"})}
+  tr.push({type:"mesh3d",x:X,y:Y,z:pts.map(()=>R.path.lo.v),i:I,j:J,k:K,color:css("--muted"),opacity:0.3,
+    hovertemplate:`level of the highest point on the path: ω = ${R.path.lo.v.toFixed(4)}<extra></extra>`});
+  // markers on the net: best point of the path (○) and the true band-3 maximum (●), if it lies on a face
+  const place=k=>{const f=k.map((v,i)=>(v-lo[i])/(hi[i]-lo[i]));
+    for(const fc of FN){const fix=[0,1,2].find(i=>!fc.d.includes(i));
+      if(Math.abs(f[fix]-fc.k(0,0)[fix])<1e-4)return fc.n(f[fc.d[0]],f[fc.d[1]])}return null};
+  const pm=place(R.path.lo.k),vm=place(R.vol.lo.k);
+  if(pm)tr.push({type:"scatter3d",mode:"markers",x:[pm[0]],y:[pm[1]],z:[R.path.lo.v],marker:{size:7,symbol:"circle-open",color:fg,line:{width:4}},
+    hovertemplate:`highest point on the path<br>ω = ${R.path.lo.v.toFixed(4)}<extra></extra>`});
+  if(vm)tr.push({type:"scatter3d",mode:"markers",x:[vm[0]],y:[vm[1]],z:[R.vol.lo.v],marker:{size:6,color:css("--seq3"),line:{color:fg,width:2}},
+    hovertemplate:`true maximum of band 3<br>ω = ${R.vol.lo.v.toFixed(4)}<extra></extra>`});
+  // corner labels; a prime marks k_x = −π
+  const nameOf=k=>{const a=k.map(v=>Math.abs(v)),nm=Object.keys(V).find(n=>V[n].every((v,i)=>Math.abs(v-a[i])<1e-6))||"";return nm+(k[0]<-1e-6?"′":"")};
+  const labs=new Map();FN.forEach(fc=>{for(const[s0,t0]of[[0,0],[1,0],[1,1],[0,1]]){const n=fc.n(s0,t0);labs.set(n.map(v=>v.toFixed(3)).join(),[n,nameOf(kAt(fc.k(s0,t0)))])}});
+  const lv=[...labs.values()],zmin=Math.min(...pts.map(p=>p.w[shown[0]]));
+  tr.push({type:"scatter3d",mode:"text",x:lv.map(v=>v[0][0]),y:lv.map(v=>v[0][1]),z:lv.map(()=>zmin),text:lv.map(v=>v[1]),
+    textfont:{color:fg,size:14,family:"Newsreader, Georgia, serif"},hoverinfo:"skip"});
+  const L=baseLayout(),ax=L._axis;delete L._axis;
+  const hide={title:{text:""},showticklabels:false,showgrid:false,zeroline:false,showbackground:false,showspikes:false};
+  const wx=Math.max(...X)-Math.min(...X),wy=Math.max(...Y)-Math.min(...Y),sc=1.6/Math.max(wx,wy);
+  const scene={bgcolor:css("--surface"),xaxis:{...ax,...hide},yaxis:{...ax,...hide},zaxis:{...ax,title:{text:"ω"},showbackground:false,showspikes:false},
+    aspectmode:"manual",aspectratio:{x:wx*sc,y:wy*sc,z:0.75}};
+  if(!el._cam){scene.camera={eye:{x:-1.3,y:-1.4,z:1.0}};el._cam=1}
+  Plotly.react(el,tr,{...L,margin:{l:0,r:0,t:0,b:0},scene,uirevision:"net"},cfg)}
+function sbRenderCell(id,sym){
+  const box=document.getElementById(id),A=sbAnalyse(sym),R=A.R,fg=css("--fg"),mut=css("--muted");
+  drawCell(box.querySelector(".sbcell"),sbp,sym?[[1,1,0],[1,-1,0]]:[[1,1,0]],false,{x:0.35,y:-0.45,z:2.1});
+  const gv=R.vol.gap,ok=g=>Math.abs(g-gv)<1e-4*Math.max(1,Math.abs(gv));
+  const pill=g=>gv<=0?`<span class="s">no gap</span>`:`<span class="pill ${ok(g)?"ok":"miss"}">${ok(g)?"✓ matches volume":"✕ "+(g>gv?"+":"")+pct(g,gv).toFixed(1)+"%"}</span>`;
+  const gt=g=>g>0?g.toFixed(3):"none";
+  box.querySelector(".sbcells").innerHTML=`
+    <div class="cell"><span class="k">Gap · path</span><span class="v">${gt(R.path.gap)}</span>${pill(R.path.gap)}</div>
+    <div class="cell"><span class="k">Gap · faces</span><span class="v">${gt(R.faces.gap)}</span>${pill(R.faces.gap)}</div>
+    <div class="cell"><span class="k">Gap · volume</span><span class="v">${gt(gv)}</span><span class="s">${gv>0?`ω ${R.vol.lo.v.toFixed(3)} – ${R.vol.hi.v.toFixed(3)}`:"bands 3 and 4 overlap"}</span></div>`;
+  sbNet(box.querySelector(".sbplot"),A,R,sbp,sym,document.getElementById("sbB4").checked?[2,3]:[2]);
+  const km=R.vol.lo.k;
+  const kf=k=>"("+k.map(v=>(v/P).toFixed(3)).join(", ")+") π/a";
+  box.querySelector(".readout").innerHTML=`Band 3 maximum: ω = ${R.vol.lo.v.toFixed(4)} at ${kf(km)}, ${sbWhere(km,A.lo,A.hi)}.<br>Highest point on the path: ω = ${R.path.lo.v.toFixed(4)} at ${kf(R.path.lo.k)}.<br>Band 4 minimum: ω = ${R.vol.hi.v.toFixed(4)} at ${kf(R.vol.hi.k)}.`}
+// ---- Liu cell sketch (geometry of cells/liu_cubic.json) and its 16³ voxel cut ----
+const LIU={a:15.5,rSil:7.5,rLead:5,n:16};
+function renderLiuCell(){
+  if(!window.Plotly)return;
+  const fg=css("--fg"),epo=css("--hostfill"),sil=css("--seq1"),lead=css("--fg2"),h=LIU.a/2,tr=[];
+  const sphere=(r,color,op,name,cut)=>{const nu=36,nv=24,X=[],Y=[],Z=[];
+    for(let i=0;i<=nv;i++){const th=Math.PI*i/nv,rx=[],ry=[],rz=[];
+      for(let j=0;j<=nu;j++){const ph=(cut?Math.PI/2:0)+(cut?1.5:2)*Math.PI*j/nu;rx.push(r*Math.sin(th)*Math.cos(ph));ry.push(r*Math.sin(th)*Math.sin(ph));rz.push(r*Math.cos(th))}
+      X.push(rx);Y.push(ry);Z.push(rz)}
+    return{type:"surface",x:X,y:Y,z:Z,colorscale:[[0,color],[1,color]],showscale:false,opacity:op,name,hovertemplate:name+"<extra></extra>",
+      lighting:{ambient:0.7,diffuse:0.6,specular:0.1}}};
+  tr.push(sphere(LIU.rSil,sil,0.75,"silicone shell, r = 7.5 mm",true));
+  tr.push(sphere(LIU.rLead,lead,1,"lead core, r = 5 mm",false));
+  // epoxy cube: translucent box + edges
+  const C=[];for(const x of[-h,h])for(const y of[-h,h])for(const z of[-h,h])C.push([x,y,z]);
+  tr.push({type:"mesh3d",x:C.map(c=>c[0]),y:C.map(c=>c[1]),z:C.map(c=>c[2]),alphahull:0,color:epo,opacity:0.18,hovertemplate:"epoxy, a = 15.5 mm<extra></extra>"});
+  const ex=[],ey=[],ez=[];for(let i=0;i<8;i++)for(let j=i+1;j<8;j++)if(C[i].filter((v,c)=>v!==C[j][c]).length===1){ex.push(C[i][0],C[j][0],null);ey.push(C[i][1],C[j][1],null);ez.push(C[i][2],C[j][2],null)}
+  tr.push({type:"scatter3d",mode:"lines",x:ex,y:ey,z:ez,line:{color:fg,width:3},hoverinfo:"skip"});
+  tr.push({type:"scatter3d",mode:"text",x:[0,0],y:[-h,0],z:[-h*1.25,h*1.15],text:["a = 15.5 mm","lead r = 5 mm in silicone (2.5 mm)"],textfont:{color:fg,size:12},hoverinfo:"skip"});
+  const L=baseLayout(),ax=L._axis;delete L._axis;const sc={bgcolor:css("--surface"),aspectmode:"cube"};
+  for(const a of["xaxis","yaxis","zaxis"])sc[a]={...ax,title:{text:a[0]+" (mm)"},range:[-h*1.3,h*1.3],showbackground:false,showspikes:false};
+  const el=document.getElementById("liuCell");if(!el._cam){sc.camera={eye:{x:1.5,y:-1.25,z:0.8}};el._cam=1}
+  Plotly.react(el,tr,{...L,margin:{l:0,r:0,t:0,b:0},scene:sc,uirevision:"liu"},cfg);
+  // voxel mid-plane cut, same rule as voxel_fem.py: material by voxel centre, later shapes painted over earlier ones
+  const n=LIU.n,hv=LIU.a/n,z=(n/2+0.5)*hv-LIU.a/2,S=360/n,col={epoxy:epo,silicone:sil,lead};
+  const mat=(x,y)=>{const r2=x*x+y*y+z*z;return r2<=LIU.rLead**2?"lead":r2<=LIU.rSil**2?"silicone":"epoxy"};
+  let svg="",touch=0;
+  for(let i=0;i<n;i++)for(let j=0;j<n;j++){const x=(i+0.5)*hv-LIU.a/2,y=(j+0.5)*hv-LIU.a/2,m=mat(x,y);
+    if(m==="silicone"&&(i===0||i===n-1||j===0||j===n-1))touch++;
+    svg+=`<rect x="${(i*S).toFixed(2)}" y="${((n-1-j)*S).toFixed(2)}" width="${S.toFixed(2)}" height="${S.toFixed(2)}" fill="${col[m]}" stroke="var(--surface)" stroke-width="0.6"/>`}
+  const cr=r=>Math.sqrt(Math.max(r*r-z*z,0))/LIU.a*360;
+  svg+=`<circle cx="180" cy="180" r="${cr(LIU.rSil).toFixed(1)}" fill="none" stroke="var(--fg)" stroke-width="1.6" stroke-dasharray="5 4"/>`+
+    `<circle cx="180" cy="180" r="${cr(LIU.rLead).toFixed(1)}" fill="none" stroke="var(--fg)" stroke-width="1.6" stroke-dasharray="5 4"/>`+
+    `<rect x="0.8" y="0.8" width="358.4" height="358.4" fill="none" stroke="var(--fg)" stroke-width="1.6"/>`;
+  document.getElementById("liuVox").innerHTML=svg;
+  document.getElementById("liuVoxHint").innerHTML=`Cut through the voxel layer next to the centre (z = ${z.toFixed(2)} mm), coloured by material: <span style="color:var(--fg2)">■</span> lead, <span style="color:var(--seq1)">■</span> silicone, epoxy in pale grey. Dashed: the true circles. One voxel is ${hv.toFixed(2)} mm, wider than the 0.5 mm epoxy gap, so ${touch} silicone voxels reach the cell boundary in this layer: in the model the shells of neighbouring cells touch along the axes.`}
+
+// 3D case: all six <110> pairs (the top-of-page model), slightly unequal springs -> band-3 top inside the volume
+const V3={k:[1,0.9,0.8],r:[2,2,2],mu:0.2,s:0.55,g:0.5};
+function renderV3(){
+  if(!window.Plotly)return;
+  const box=document.getElementById("sbVol"),A=sbAnalyse("all",V3),R=A.R,fg=css("--fg"),warn=css("--warn");
+  const gv=R.vol.gap,ok=g=>Math.abs(g-gv)<1e-4*Math.max(1,Math.abs(gv));
+  const pill=g=>`<span class="pill ${ok(g)?"ok":"miss"}">${ok(g)?"✓ matches volume":"✕ "+(g>gv?"+":"")+pct(g,gv).toFixed(1)+"%"}</span>`;
+  box.querySelector(".sbcells").innerHTML=`
+    <div class="cell"><span class="k">Gap · path</span><span class="v">${R.path.gap.toFixed(3)}</span>${pill(R.path.gap)}</div>
+    <div class="cell"><span class="k">Gap · faces</span><span class="v">${R.faces.gap.toFixed(3)}</span>${pill(R.faces.gap)}</div>
+    <div class="cell"><span class="k">Gap · volume</span><span class="v">${gv.toFixed(3)}</span><span class="s">ω ${R.vol.lo.v.toFixed(3)} – ${R.vol.hi.v.toFixed(3)}</span></div>`;
+  drawCell(box.querySelector(".sbcell"),V3,DIAG.map(o=>o.d),false);
+  sbNet(box.querySelector(".sbplot"),A,R,V3,"all");
+  // band 3 on a grid over the box, for the region above the face maximum
+  const N=22,t=[...Array(N+1)].map((_,i)=>P*i/N),X=[],Y=[],Z=[],W=[];
+  for(const a of t)for(const b of t)for(const c of t){X.push(a/P);Y.push(b/P);Z.push(c/P);W.push(sbBands([a,b,c],V3,"all")[2])}
+  const tr=[{type:"isosurface",x:X,y:Y,z:Z,value:W,isomin:R.faces.lo.v,isomax:R.vol.lo.v,surface:{count:3,fill:1},caps:{x:{show:false},y:{show:false},z:{show:false}},
+      colorscale:[[0,warn],[1,warn]],showscale:false,opacity:0.55,hovertemplate:"band 3 above every face point<br>ω = %{value:.4f}<extra></extra>"}];
+  const C=[[0,0,0],[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1]],ex=[],ey=[],ez=[];
+  for(let i=0;i<8;i++)for(let j=i+1;j<8;j++){if(C[i].reduce((s,v,c)=>s+Math.abs(v-C[j][c]),0)!==1)continue;
+    ex.push(C[i][0],C[j][0],null);ey.push(C[i][1],C[j][1],null);ez.push(C[i][2],C[j][2],null)}
+  tr.push({type:"scatter3d",mode:"lines",x:ex,y:ey,z:ez,line:{color:fg,width:5},hoverinfo:"skip"});
+  const vn=Object.keys(V);tr.push({type:"scatter3d",mode:"text",x:vn.map(n=>V[n][0]/P),y:vn.map(n=>V[n][1]/P),z:vn.map(n=>V[n][2]/P),text:vn,textposition:"top center",
+    textfont:{color:fg,size:15,family:"Newsreader, Georgia, serif"},hoverinfo:"skip"});
+  const km=R.vol.lo.k,kf=R.faces.lo.k;
+  tr.push({type:"scatter3d",mode:"markers",x:[km[0]/P],y:[km[1]/P],z:[km[2]/P],marker:{size:7,color:css("--seq3"),line:{color:fg,width:2}},
+    hovertemplate:`true maximum of band 3<br>ω = ${R.vol.lo.v.toFixed(4)}<extra></extra>`});
+  tr.push({type:"scatter3d",mode:"markers",x:[kf[0]/P],y:[kf[1]/P],z:[kf[2]/P],marker:{size:7,symbol:"circle-open",color:warn,line:{width:4}},
+    hovertemplate:`highest point on the faces<br>ω = ${R.faces.lo.v.toFixed(4)}<extra></extra>`});
+  const L=baseLayout(),ax=L._axis;delete L._axis;const sc={bgcolor:css("--surface"),aspectmode:"cube"};
+  for(const[a,l]of[["xaxis","kx"],["yaxis","ky"],["zaxis","kz"]])sc[a]={...ax,title:{text:l+" (π/a)"},range:[-0.05,1.1],dtick:0.5,showbackground:false,showspikes:false};
+  const el=box.querySelector(".sbbox");if(!el._cam){sc.camera={eye:{x:1.6,y:-1.35,z:0.9}};el._cam=1}
+  Plotly.react(el,tr,{...L,margin:{l:0,r:0,t:0,b:0},scene:sc,uirevision:"v3"},cfg);
+  const k3=k=>"("+k.map(v=>(v/P).toFixed(3)).join(", ")+") π/a";
+  box.querySelector(".readout").innerHTML=`Band 3 maximum: ω = ${R.vol.lo.v.toFixed(4)} at ${k3(km)}, ${sbWhere(km,A.lo,A.hi)}.<br>Highest point on the faces: ω = ${R.faces.lo.v.toFixed(4)} at ${k3(kf)}. Highest point on the path: ω = ${R.path.lo.v.toFixed(4)}.<br>Band 4 minimum: ω = ${R.vol.hi.v.toFixed(4)} at ${k3(R.vol.hi.k)}.`}
+function renderSB(){
+  if(!window.Plotly)return;
+  document.getElementById("sbG").value=sbp.g;document.getElementById("sbGo").textContent=sbp.g.toFixed(2);
+  document.getElementById("sbParams").innerHTML=`Fixed: host springs k = (${sbp.k.join(", ")}), shear ratio s = ${sbp.s}, resonator springs r = (${sbp.r.join(", ")}), μ = ${sbp.mu}. The resonator springs are stiff on purpose: then band 3 is an ordinary host wave and keeps its shape, while soft resonators would flatten it. "Strongest dome" was found by optimising the height of the interior maximum above the path maximum. There the symmetric cell has no gap at all, because the extra mirror spring lifts band 3. Analytically, for k<sub>x</sub> = k<sub>y</sub> the dome of the (1,1,0) wave is highest at g ≈ (1+s)k/2. Move g to watch the maximum leave the corner once the diagonal spring is strong enough.`;
+  sbRenderCell("sbSym",true);sbRenderCell("sbAsym",false)}
+let sbPending=false;const sbSchedule=()=>{if(!sbPending){sbPending=true;requestAnimationFrame(()=>{sbPending=false;renderSB()})}};
+document.getElementById("sbG").addEventListener("input",e=>{sbp.g=+e.target.value;document.getElementById("sbGo").textContent=sbp.g.toFixed(2);sbSchedule()});
+const sbPreset=(q,id)=>{sbp={...q,k:[...q.k],r:[...q.r]};for(const b of["sbPreEx","sbPreStrong"])document.getElementById(b).setAttribute("aria-pressed",String(b===id));sbSchedule()};
+document.getElementById("sbPreEx").addEventListener("click",()=>sbPreset(SB_EX,"sbPreEx"));
+document.getElementById("sbPreStrong").addEventListener("click",()=>sbPreset(SB_STRONG,"sbPreStrong"));
+document.getElementById("sbB4").addEventListener("change",sbSchedule);
+
 // ---- polar sweep: rays from Γ along the faces A (k_z = 0), C (k_y = k_z), D (k_x = k_y) ----
 // k: (ux,uy,uz) in π/a; f, p as in FEM (null where not computed); rays: [face, dir, angle°, step, id]
 const POL={"k":[[0.0,0.0,0.0],[0.015625,0.0,0.0],[0.0625,0.0,0.0],[0.140625,0.0,0.0],[0.25,0.0,0.0],[0.390625,0.0,0.0],[0.5625,0.0,0.0],[0.765625,0.0,0.0],[1.0,0.0,0.0],[0.015625,0.002057,0.0],[0.0625,0.008228,0.0],[0.140625,0.018514,0.0],[0.25,0.032913,0.0],[0.390625,0.051427,0.0],[0.5625,0.074055,0.0],[0.765625,0.100796,0.0],[1.0,0.131652,0.0],[0.015625,0.004187,0.0],[0.0625,0.016747,0.0],[0.140625,0.03768,0.0],[0.25,0.066987,0.0],[0.390625,0.104668,0.0],[0.5625,0.150721,0.0],[0.765625,0.205149,0.0],[1.0,0.267949,0.0],[0.015625,0.006472,0.0],[0.0625,0.025888,0.0],[0.140625,0.058249,0.0],[0.25,0.103553,0.0],[0.390625,0.161802,0.0],[0.5625,0.232995,0.0],[0.765625,0.317132,0.0],[1.0,0.414214,0.0],[0.015625,0.009021,0.0],[0.0625,0.036084,0.0],[0.140625,0.08119,0.0],[0.25,0.144338,0.0],[0.390625,0.225527,0.0],[0.5625,0.32476,0.0],[0.765625,0.442034,0.0],[1.0,0.57735,0.0],[0.015625,0.011989,0.0],[0.0625,0.047958,0.0],[0.140625,0.107905,0.0],[0.25,0.191832,0.0],[0.390625,0.299737,0.0],[0.5625,0.431621,0.0],[0.765625,0.587485,0.0],[1.0,0.767327,0.0],[0.015625,0.015625,0.0],[0.0625,0.0625,0.0],[0.140625,0.140625,0.0],[0.25,0.25,0.0],[0.390625,0.390625,0.0],[0.5625,0.5625,0.0],[0.765625,0.765625,0.0],[1.0,1.0,0.0],[0.015625,0.001517,0.001517],[0.0625,0.006069,0.006069],[0.140625,0.013655,0.013655],[0.25,0.024276,0.024276],[0.390625,0.037932,0.037932],[0.5625,0.054622,0.054622],[0.765625,0.074346,0.074346],[1.0,0.097105,0.097105],[0.015625,0.003093,0.003093],[0.0625,0.012371,0.012371],[0.140625,0.027836,0.027836],[0.25,0.049486,0.049486],[0.390625,0.077322,0.077322],[0.5625,0.111343,0.111343],[0.765625,0.15155,0.15155],[1.0,0.197943,0.197943],[0.015625,0.004794,0.004794],[0.0625,0.019178,0.019178],[0.140625,0.04315,0.04315],[0.25,0.076711,0.076711],[0.390625,0.119861,0.119861],[0.5625,0.1726,0.1726],[0.765625,0.234928,0.234928],[1.0,0.306844,0.306844],[0.015625,0.006712,0.006712],[0.0625,0.026847,0.026847],[0.140625,0.060405,0.060405],[0.25,0.107387,0.107387],[0.390625,0.167792,0.167792],[0.5625,0.24162,0.24162],[0.765625,0.328872,0.328872],[1.0,0.429547,0.429547],[0.015625,0.008978,0.008978],[0.0625,0.035912,0.035912],[0.140625,0.080801,0.080801],[0.25,0.143646,0.143646],[0.390625,0.224448,0.224448],[0.5625,0.323205,0.323205],[0.765625,0.439917,0.439917],[1.0,0.574586,0.574586],[0.015625,0.011813,0.011813],[0.0625,0.047254,0.047254],[0.140625,0.106321,0.106321],[0.25,0.189015,0.189015],[0.390625,0.295336,0.295336],[0.5625,0.425284,0.425284],[0.765625,0.578859,0.578859],[1.0,0.75606,0.75606],[0.015625,0.015625,0.015625],[0.0625,0.0625,0.0625],[0.140625,0.140625,0.140625],[0.25,0.25,0.25],[0.390625,0.390625,0.390625],[0.5625,0.5625,0.5625],[0.765625,0.765625,0.765625],[1.0,1.0,1.0],[0.015625,0.015625,0.002734],[0.0625,0.0625,0.010936],[0.140625,0.140625,0.024605],[0.25,0.25,0.043742],[0.390625,0.390625,0.068347],[0.5625,0.5625,0.09842],[0.765625,0.765625,0.13396],[1.0,1.0,0.174969],[0.015625,0.015625,0.005553],[0.0625,0.0625,0.022211],[0.140625,0.140625,0.049975],[0.25,0.25,0.088844],[0.390625,0.390625,0.138819],[0.5625,0.5625,0.1999],[0.765625,0.765625,0.272085],[1.0,1.0,0.355377],[0.015625,0.015625,0.008553],[0.0625,0.0625,0.03421],[0.140625,0.140625,0.076973],[0.25,0.25,0.136841],[0.390625,0.390625,0.213814],[0.5625,0.5625,0.307892],[0.765625,0.765625,0.419075],[1.0,1.0,0.547363],[0.015625,0.015625,0.011854],[0.0625,0.0625,0.047416],[0.140625,0.140625,0.106687],[0.25,0.25,0.189665],[0.390625,0.390625,0.296352],[0.5625,0.5625,0.426747],[0.765625,0.765625,0.580849],[1.0,1.0,0.758661]],"f":[[0.0,0.0,0.0,344.54,344.54,344.54,759.33,759.33,759.33,1371.63,1371.63,1376.7],[190.57,190.57,328.72,344.54,344.54,344.54,810.49,810.49,994.98,1371.63,1371.63,1376.7],[344.52,344.52,344.54,406.17,406.17,438.45,1371.63,1371.63,1376.58,1376.58,1376.7,1382.71],[344.52,344.52,344.54,439.33,439.33,446.55,1371.63,1371.63,1376.69,1376.69,1376.71,1382.71],[344.52,344.52,344.54,445.24,445.24,449.02,1371.62,1371.63,1376.7,1376.7,1376.72,1382.7],[344.52,344.52,344.54,446.87,446.87,451.56,1371.6,1371.63,1376.7,1376.7,1376.76,1382.69],[344.52,344.52,344.54,447.43,447.43,454.82,1371.57,1371.63,1376.7,1376.7,1376.8,1382.67],[344.51,344.51,344.54,447.65,447.65,458.08,1371.54,1371.63,1376.7,1376.7,1376.84,1382.66],[344.51,344.51,344.54,447.72,447.72,459.61,1371.53,1371.63,1376.7,1376.7,1376.87,1382.65],[191.99,194.65,329.58,344.54,344.54,344.54,811.4,813.12,997.24,1371.63,1371.63,1376.7],[344.52,344.52,344.54,406.84,408.03,438.54,1371.63,1371.63,1376.62,1376.65,1376.7,1382.71],[344.53,344.53,344.54,439.48,439.74,446.57,1371.63,1371.63,1376.69,1376.69,1376.71,1382.71],[344.52,344.52,344.54,445.29,445.4,449.02,1371.62,1371.63,1376.7,1376.7,1376.72,1382.7],[344.52,344.52,344.54,446.89,446.99,451.56,1371.6,1371.63,1376.7,1376.7,1376.76,1382.69],[344.52,344.52,344.54,447.44,447.61,454.82,1371.57,1371.63,1376.7,1376.7,1376.8,1382.67],[344.51,344.51,344.54,447.66,447.95,458.07,1371.54,1371.63,1376.7,1376.7,1376.84,1382.65],[344.51,344.51,344.54,447.72,448.21,459.6,1371.53,1371.63,1376.7,1376.71,1376.87,1382.64],[196.35,206.33,332.25,344.54,344.54,344.54,814.24,821.21,1004.49,1371.63,1371.63,1376.7],[344.52,344.52,344.54,408.8,412.84,438.84,1371.63,1371.63,1376.66,1376.68,1376.7,1382.71],[344.53,344.53,344.54,439.91,440.79,446.62,1371.63,1371.63,1376.7,1376.7,1376.71,1382.71],[344.52,344.52,344.54,445.43,445.82,449.01,1371.62,1371.63,1376.7,1376.7,1376.72,1382.7],[344.52,344.52,344.54,446.94,447.35,451.54,1371.6,1371.63,1376.7,1376.7,1376.76,1382.69],[344.52,344.52,344.54,447.47,448.15,454.8,1371.57,1371.63,1376.7,1376.71,1376.8,1382.67],[344.51,344.51,344.54,447.67,448.86,458.06,1371.54,1371.62,1376.7,1376.72,1376.84,1382.65],[344.51,344.51,344.53,447.72,449.69,459.59,1371.52,1371.62,1376.7,1376.73,1376.87,1382.64],[203.92,224.19,337.09,344.54,344.54,344.54,819.45,835.34,1018.28,1371.63,1371.63,1376.7],[344.52,344.53,344.54,411.95,418.93,439.37,1371.63,1371.63,1376.68,1376.69,1376.7,1382.71],[344.53,344.53,344.54,440.6,442.13,446.72,1371.63,1371.63,1376.7,1376.7,1376.71,1382.71],[344.52,344.53,344.54,445.66,446.41,449.02,1371.62,1371.63,1376.7,1376.7,1376.72,1382.7],[344.52,344.52,344.53,447.04,447.94,451.53,1371.59,1371.63,1376.7,1376.71,1376.76,1382.68],[344.52,344.52,344.53,447.51,449.07,454.79,1371.56,1371.62,1376.7,1376.72,1376.8,1382.66],[344.51,344.52,344.53,447.68,450.39,458.04,1371.53,1371.61,1376.7,1376.74,1376.85,1382.64],[344.51,344.51,344.53,447.73,452.05,459.57,1371.51,1371.61,1376.71,1376.76,1376.87,1382.63],[215.22,246.25,344.53,344.54,344.54,344.69,827.91,856.35,1041.98,1371.63,1371.63,1376.7],[344.52,344.53,344.54,416.11,424.89,440.15,1371.63,1371.63,1376.68,1376.69,1376.7,1382.71],[344.53,344.53,344.54,441.5,443.45,446.87,1371.63,1371.63,1376.7,1376.7,1376.71,1382.7],[344.52,344.53,344.53,445.95,447.09,449.03,1371.61,1371.63,1376.7,1376.71,1376.72,1382.7],[344.52,344.52,344.53,447.15,448.77,451.52,1371.59,1371.62,1376.7,1376.72,1376.76,1382.68],[344.52,344.52,344.53,447.56,450.43,454.77,1371.56,1371.61,1376.7,1376.74,1376.8,1382.66],[344.51,344.52,344.53,447.7,452.54,458.03,1371.52,1371.6,1376.71,1376.77,1376.85,1382.63],[344.51,344.52,344.53,447.74,455.05,459.56,1371.5,1371.59,1376.71,1376.81,1376.87,1382.61],[231.01,270.35,344.54,344.54,344.54,355.81,841.3,885.03,1081.9,1371.63,1371.63,1376.7],[344.52,344.53,344.54,421.04,429.95,441.23,1371.63,1371.63,1376.69,1376.69,1376.7,1382.71],[344.53,344.53,344.54,442.55,444.61,447.09,1371.63,1371.63,1376.7,1376.7,1376.71,1382.7],[344.53,344.53,344.53,446.28,447.86,449.09,1371.61,1371.63,1376.7,1376.71,1376.72,1382.69],[344.52,344.52,344.53,447.29,449.9,451.53,1371.59,1371.62,1376.7,1376.73,1376.76,1382.68],[344.52,344.52,344.53,447.61,452.31,454.77,1371.55,1371.61,1376.7,1376.77,1376.8,1382.65],[344.51,344.52,344.53,447.72,455.23,458.02,1371.51,1371.59,1376.71,1376.81,1376.85,1382.62],[344.51,344.52,344.52,447.75,458.03,459.55,1371.48,1371.58,1376.71,1376.85,1376.87,1382.59],[252.39,294.74,344.54,344.54,344.54,370.88,862.88,922.29,1148.79,1371.63,1371.63,1376.7],[344.52,344.53,344.54,426.42,434.01,442.58,1371.63,1371.63,1376.69,1376.7,1376.7,1382.71],[344.53,344.53,344.54,443.68,445.58,447.43,1371.62,1371.63,1376.7,1376.7,1376.71,1382.7],[344.53,344.53,344.53,446.64,448.64,449.33,1371.61,1371.62,1376.7,1376.72,1376.72,1382.69],[344.52,344.52,344.53,447.42,451.35,451.69,1371.58,1371.61,1376.7,1376.75,1376.76,1382.67],[344.52,344.52,344.53,447.67,454.67,454.86,1371.53,1371.6,1376.7,1376.8,1376.8,1382.64],[344.51,344.52,344.52,447.74,457.98,458.04,1371.49,1371.59,1376.71,1376.85,1376.85,1382.6],[344.51,344.52,344.52,447.75,459.54,459.54,1371.47,1371.58,1376.71,1376.87,1376.87,1382.59],[192.99,194.15,329.65,344.54,344.54,344.54,812.04,812.79,997.43,1371.63,1371.63,1376.7],[344.52,344.52,344.54,407.29,407.81,438.55,1371.63,1371.63,1376.63,1376.64,1376.7,1382.71],[344.53,344.53,344.54,439.57,439.69,446.57,1371.63,1371.63,1376.69,1376.69,1376.71,1382.71],[344.52,344.52,344.54,445.33,445.38,449.02,1371.62,1371.63,1376.7,1376.7,1376.72,1382.7],[344.52,344.52,344.54,446.93,446.96,451.56,1371.6,1371.63,1376.7,1376.7,1376.76,1382.69],[344.52,344.52,344.54,447.53,447.54,454.81,1371.57,1371.63,1376.7,1376.7,1376.8,1382.67],[344.51,344.51,344.54,447.82,447.82,458.07,1371.54,1371.63,1376.7,1376.7,1376.84,1382.65],[344.51,344.51,344.54,447.99,447.99,459.6,1371.53,1371.63,1376.71,1376.71,1376.87,1382.64],[200.29,204.55,332.54,344.54,344.54,344.54,816.92,819.91,1005.29,1371.63,1371.63,1376.7],[344.52,344.52,344.54,410.45,412.16,438.87,1371.63,1371.63,1376.67,1376.68,1376.7,1382.71],[344.53,344.53,344.54,440.27,440.65,446.63,1371.63,1371.63,1376.7,1376.7,1376.71,1382.71],[344.52,344.52,344.54,445.59,445.74,449.01,1371.62,1371.63,1376.7,1376.7,1376.72,1382.7],[344.52,344.52,344.54,447.14,447.21,451.54,1371.6,1371.63,1376.7,1376.7,1376.76,1382.69],[344.52,344.52,344.54,447.83,447.86,454.8,1371.57,1371.63,1376.7,1376.7,1376.8,1382.67],[344.51,344.51,344.54,448.32,448.33,458.06,1371.54,1371.62,1376.71,1376.71,1376.84,1382.65],[344.51,344.51,344.53,448.83,448.83,459.58,1371.52,1371.62,1376.72,1376.72,1376.87,1382.64],[212.67,220.84,337.73,344.54,344.54,344.54,825.95,832.51,1020.18,1371.63,1371.63,1376.7],[344.52,344.53,344.54,415.17,417.91,439.43,1371.63,1371.63,1376.68,1376.69,1376.7,1382.71],[344.53,344.53,344.54,441.29,441.91,446.73,1371.63,1371.63,1376.7,1376.7,1376.71,1382.71],[344.53,344.53,344.54,445.99,446.25,449.01,1371.62,1371.63,1376.7,1376.7,1376.72,1382.7],[344.52,344.52,344.53,447.49,447.62,451.52,1371.59,1371.63,1376.7,1376.7,1376.76,1382.68],[344.52,344.52,344.53,448.36,448.42,454.78,1371.56,1371.62,1376.71,1376.71,1376.8,1382.66],[344.51,344.52,344.53,449.22,449.23,458.04,1371.53,1371.61,1376.72,1376.73,1376.85,1382.64],[344.51,344.51,344.53,450.27,450.27,459.57,1371.51,1371.6,1376.74,1376.74,1376.87,1382.62],[230.45,241.76,344.54,344.54,344.54,345.77,840.85,851.7,1045.57,1371.63,1371.63,1376.7],[344.53,344.53,344.54,420.8,423.82,440.26,1371.63,1371.63,1376.69,1376.69,1376.7,1382.71],[344.53,344.53,344.54,442.51,443.2,446.88,1371.63,1371.63,1376.7,1376.7,1376.71,1382.7],[344.53,344.53,344.53,446.5,446.83,449.02,1371.61,1371.63,1376.7,1376.7,1376.72,1382.7],[344.52,344.52,344.53,448.0,448.17,451.51,1371.59,1371.62,1376.71,1376.71,1376.76,1382.68],[344.52,344.52,344.53,449.18,449.26,454.77,1371.56,1371.61,1376.72,1376.72,1376.8,1382.66],[344.51,344.52,344.53,450.58,450.6,458.03,1371.53,1371.59,1376.74,1376.75,1376.85,1382.63],[344.51,344.51,344.52,452.35,452.35,459.56,1371.5,1371.57,1376.77,1376.77,1376.87,1382.6],[254.06,265.83,344.54,344.54,344.54,357.34,864.86,879.08,1087.95,1371.63,1371.63,1376.7],[344.53,344.53,344.54,426.7,429.12,441.38,1371.63,1371.63,1376.69,1376.69,1376.7,1382.71],[344.53,344.53,344.54,443.8,444.38,447.08,1371.63,1371.63,1376.7,1376.7,1376.71,1382.7],[344.53,344.53,344.53,447.12,447.45,449.05,1371.61,1371.62,1376.71,1376.71,1376.72,1382.69],[344.52,344.52,344.53,448.74,448.92,451.51,1371.59,1371.61,1376.72,1376.72,1376.76,1382.67],[344.52,344.52,344.53,450.4,450.48,454.77,1371.55,1371.59,1376.74,1376.74,1376.8,1382.64],[344.51,344.52,344.52,452.51,452.54,458.02,1371.52,1371.57,1376.77,1376.77,1376.85,1382.61],[344.51,344.51,344.52,455.02,455.03,459.55,1371.49,1371.53,1376.81,1376.81,1376.87,1382.57],[283.89,291.86,344.54,344.54,344.54,372.82,904.41,917.31,1158.6,1371.63,1371.63,1376.7],[344.53,344.53,344.54,432.34,433.59,442.75,1371.63,1371.63,1376.7,1376.7,1376.7,1382.71],[344.53,344.53,344.53,445.06,445.4,447.37,1371.63,1371.63,1376.7,1376.7,1376.71,1382.7],[344.53,344.53,344.53,447.88,448.16,449.13,1371.61,1371.62,1376.71,1376.71,1376.72,1382.69],[344.52,344.52,344.53,449.82,449.99,451.54,1371.58,1371.6,1376.73,1376.73,1376.76,1382.66],[344.52,344.52,344.52,452.19,452.27,454.77,1371.55,1371.57,1376.77,1376.77,1376.8,1382.63],[344.51,344.51,344.52,455.08,455.11,458.02,1371.51,1371.53,1376.81,1376.81,1376.85,1382.58],[344.51,344.51,344.51,457.9,457.9,459.54,1371.48,1371.5,1376.85,1376.85,1376.88,1382.54],[319.71,319.71,344.54,344.56,344.56,391.44,972.7,972.7,1273.15,1371.63,1371.63,1376.7],[344.53,344.53,344.54,437.36,437.36,444.25,1371.63,1371.63,1376.7,1376.7,1376.7,1382.71],[344.53,344.53,344.53,446.29,446.29,447.78,1371.62,1371.62,1376.71,1376.71,1376.71,1382.7],[344.53,344.53,344.53,448.9,448.9,449.44,1371.61,1371.61,1376.72,1376.72,1376.73,1382.68],[344.52,344.52,344.52,451.48,451.48,451.72,1371.58,1371.58,1376.76,1376.76,1376.76,1382.65],[344.52,344.52,344.52,454.76,454.76,454.85,1371.54,1371.54,1376.8,1376.81,1376.81,1382.6],[344.51,344.51,344.51,458.01,458.01,458.03,1371.49,1371.49,1376.85,1376.85,1376.85,1382.55],[344.51,344.51,344.51,459.54,459.54,459.54,1371.47,1371.47,1376.88,1376.88,1376.88,1382.52],[256.04,295.64,344.54,344.54,344.54,371.62,867.04,923.86,1152.49,1371.63,1371.63,1376.7],[344.52,344.53,344.54,427.21,434.14,442.65,1371.63,1371.63,1376.69,1376.7,1376.7,1382.71],[344.53,344.53,344.54,443.85,445.61,447.44,1371.62,1371.63,1376.7,1376.7,1376.71,1382.7],[344.53,344.53,344.53,446.74,448.65,449.32,1371.61,1371.62,1376.7,1376.72,1376.72,1382.69],[344.52,344.52,344.53,447.57,451.35,451.69,1371.58,1371.61,1376.7,1376.75,1376.76,1382.67],[344.52,344.52,344.53,447.95,454.68,454.86,1371.53,1371.6,1376.71,1376.8,1376.8,1382.63],[344.51,344.52,344.52,448.26,457.98,458.04,1371.49,1371.58,1376.72,1376.85,1376.85,1382.6],[344.51,344.52,344.52,448.62,459.54,459.54,1371.47,1371.57,1376.72,1376.87,1376.87,1382.58],[266.38,298.38,344.54,344.54,344.54,373.87,879.68,928.75,1164.18,1371.63,1371.63,1376.7],[344.53,344.53,344.54,429.29,434.54,442.84,1371.63,1371.63,1376.69,1376.7,1376.7,1382.71],[344.53,344.53,344.54,444.3,445.7,447.47,1371.62,1371.63,1376.7,1376.7,1376.71,1382.7],[344.53,344.53,344.53,447.03,448.68,449.32,1371.61,1371.62,1376.7,1376.72,1376.72,1382.69],[344.52,344.52,344.53,448.03,451.37,451.68,1371.58,1371.61,1376.71,1376.76,1376.76,1382.67],[344.52,344.52,344.52,448.81,454.69,454.85,1371.53,1371.59,1376.72,1376.8,1376.8,1382.63],[344.51,344.52,344.52,449.77,457.99,458.04,1371.49,1371.57,1376.74,1376.85,1376.85,1382.59],[344.51,344.52,344.52,451.07,459.54,459.54,1371.47,1371.55,1376.76,1376.87,1376.87,1382.57],[281.83,303.13,344.54,344.54,344.55,377.8,901.22,937.58,1185.69,1371.63,1371.63,1376.7],[344.53,344.53,344.54,432.03,435.21,443.16,1371.63,1371.63,1376.7,1376.7,1376.7,1382.71],[344.53,344.53,344.53,444.93,445.84,447.52,1371.62,1371.63,1376.7,1376.7,1376.71,1382.7],[344.53,344.53,344.53,447.5,448.74,449.31,1371.61,1371.62,1376.71,1376.72,1376.72,1382.69],[344.52,344.52,344.53,448.81,451.4,451.67,1371.58,1371.6,1376.72,1376.76,1376.76,1382.66],[344.52,344.52,344.52,450.25,454.71,454.84,1371.54,1371.58,1376.74,1376.8,1376.8,1382.62],[344.51,344.52,344.52,452.17,458.0,458.04,1371.49,1371.55,1376.77,1376.85,1376.85,1382.58],[344.51,344.51,344.51,454.54,459.54,459.54,1371.47,1371.52,1376.81,1376.87,1376.87,1382.55],[300.28,310.12,344.54,344.55,344.55,383.61,932.12,951.52,1220.4,1371.63,1371.63,1376.7],[344.53,344.53,344.54,434.83,436.15,443.64,1371.63,1371.63,1376.7,1376.7,1376.7,1382.71],[344.53,344.53,344.53,445.62,446.04,447.61,1371.62,1371.63,1376.7,1376.7,1376.71,1382.7],[344.53,344.53,344.53,448.13,448.81,449.32,1371.61,1371.61,1376.71,1376.72,1376.72,1382.69],[344.52,344.52,344.53,449.96,451.43,451.66,1371.58,1371.59,1376.74,1376.76,1376.76,1382.66],[344.52,344.52,344.52,452.27,454.73,454.83,1371.54,1371.56,1376.77,1376.8,1376.8,1382.61],[344.51,344.51,344.51,455.14,458.01,458.03,1371.49,1371.52,1376.81,1376.85,1376.85,1382.56],[344.51,344.51,344.51,457.93,459.54,459.54,1371.47,1371.49,1376.85,1376.88,1376.88,1382.53]],"p":[[[96,4,0],[4,94,2],[0,1,99],[50,48,2],[21,29,50],[27,27,46],[58,38,4],[18,82,0],[2,1,97],[31,38,32],[36,31,33],[7,47,46]],[[0,95,5],[0,2,98],[100,0,0],[0,50,50],[50,46,4],[50,4,46],[0,97,2],[0,2,97],[99,0,0],[16,42,42],[51,25,25],[0,50,50]],[[50,47,3],[50,2,48],[0,50,50],[0,93,7],[0,10,90],[100,0,0],[16,42,42],[51,25,25],[49,50,1],[49,1,50],[0,50,50],[33,33,33]],[[50,49,1],[50,1,49],[0,50,50],[0,92,8],[0,8,92],[100,0,0],[16,42,42],[51,25,25],[50,48,2],[50,2,48],[0,50,50],[33,33,33]],[[50,48,2],[50,2,48],[0,50,50],[0,91,9],[0,12,88],[100,0,0],[16,42,42],[51,25,25],[50,8,42],[50,44,6],[0,50,50],[33,33,33]],[[50,46,4],[50,3,47],[0,50,50],[0,90,10],[0,7,93],[100,0,0],[16,42,42],[51,25,25],[50,10,41],[50,41,9],[0,50,50],[33,33,33]],[[50,48,2],[50,2,48],[0,50,50],[0,95,5],[0,5,95],[100,0,0],[16,42,42],[51,25,25],[50,35,15],[50,16,34],[0,50,50],[34,33,33]],[[50,47,3],[50,2,48],[0,50,50],[0,90,10],[0,8,92],[100,0,0],[16,42,42],[51,25,25],[50,43,7],[50,2,48],[0,50,50],[34,33,33]],[[50,47,3],[50,3,47],[0,50,50],[0,93,7],[0,8,92],[100,0,0],[16,42,42],[51,25,25],[50,44,6],[50,4,46],[0,50,50],[34,33,33]],[[0,0,100],[1,99,0],[99,1,0],[1,49,50],[49,1,50],[50,50,0],[0,0,99],[1,99,0],[98,1,0],[16,42,42],[51,25,24],[2,48,50]],[[49,1,50],[50,50,0],[1,49,50],[0,0,100],[1,99,0],[99,1,0],[16,42,43],[51,25,24],[49,1,50],[50,50,0],[1,49,50],[33,33,33]],[[49,1,50],[50,50,0],[1,49,50],[0,0,100],[1,99,0],[99,1,0],[16,42,42],[51,25,24],[50,0,50],[50,50,0],[0,50,50],[33,33,33]],[[50,0,50],[50,50,0],[0,50,50],[0,0,100],[0,100,0],[100,0,0],[16,42,42],[51,25,24],[50,50,0],[50,0,50],[0,50,50],[33,33,33]],[[50,0,50],[50,50,0],[0,50,50],[0,0,100],[0,100,0],[100,0,0],[16,42,42],[51,25,24],[50,50,0],[50,0,50],[0,50,50],[33,33,33]],[[50,0,50],[50,50,0],[0,50,50],[0,0,100],[0,100,0],[100,0,0],[16,42,42],[51,25,24],[50,50,0],[50,0,50],[0,50,50],[34,33,33]],[[50,0,50],[50,50,0],[0,50,50],[0,0,100],[0,100,0],[100,0,0],[16,42,43],[51,25,24],[50,50,0],[50,0,50],[0,50,50],[34,33,33]],[[50,0,50],[50,50,0],[0,50,50],[0,0,100],[0,100,0],[100,0,0],[16,42,43],[51,25,24],[50,50,0],[50,0,50],[0,50,50],[34,33,33]],[[0,0,100],[3,96,0],[96,4,0],[3,47,50],[47,3,50],[50,50,0],[0,0,99],[4,96,0],[96,4,0],[16,41,43],[51,26,24],[6,44,50]],[[47,3,50],[50,50,0],[3,47,50],[0,0,100],[4,96,0],[96,4,0],[16,40,44],[51,26,23],[47,3,50],[50,50,0],[3,47,50],[33,33,33]],[[47,3,50],[50,50,0],[3,47,50],[0,0,100],[3,97,0],[97,3,0],[16,41,43],[51,26,24],[50,50,0],[49,1,50],[1,49,50],[33,33,33]],[[48,2,50],[50,50,0],[2,48,50],[0,0,100],[1,99,0],[99,1,0],[16,41,43],[51,26,24],[50,50,0],[50,0,50],[0,50,50],[33,33,33]],[[49,1,50],[50,50,0],[1,49,50],[0,0,100],[0,100,0],[100,0,0],[16,41,43],[51,26,23],[50,50,0],[50,0,50],[0,50,50],[33,33,33]],[[50,0,50],[50,50,0],[0,50,50],[0,0,100],[0,100,0],[100,0,0],[16,41,43],[51,26,23],[50,50,0],[50,0,50],[0,50,50],[34,33,33]],[[50,0,50],[50,50,0],[0,50,50],[0,0,100],[0,100,0],[100,0,0],[16,40,44],[51,26,23],[50,50,0],[50,0,50],[0,50,50],[34,33,33]],[[50,50,0],[50,0,50],[0,50,50],[0,0,100],[0,100,0],[100,0,0],[16,40,45],[51,27,22],[50,50,0],[50,0,50],[0,50,50],[34,33,33]],[[0,0,100],[9,91,0],[91,9,0],[7,43,50],[43,7,50],[50,50,0],[0,0,99],[9,91,0],[90,9,0],[16,40,44],[51,27,22],[11,39,50]],[[43,7,50],[50,50,0],[7,43,50],[0,0,100],[9,91,0],[91,9,0],[16,39,45],[50,28,22],[43,7,50],[50,50,0],[7,43,50],[33,33,33]],[[44,6,50],[50,50,0],[6,44,50],[0,0,100],[8,92,0],[92,8,0],[16,39,45],[51,27,22],[50,50,0],[48,2,50],[2,48,50],[33,33,33]],[[46,4,50],[50,50,0],[4,46,50],[0,0,100],[3,97,0],[97,3,0],[16,39,45],[51,27,22],[50,50,0],[50,0,50],[0,50,50],[33,33,33]],[[48,2,50],[50,50,0],[2,48,50],[0,0,100],[0,100,0],[100,0,0],[16,39,45],[50,28,22],[50,50,0],[50,0,50],[0,50,50],[33,33,33]],[[50,50,0],[49,1,50],[1,49,50],[0,0,100],[0,100,0],[100,0,0],[16,39,45],[50,28,22],[50,50,0],[50,0,50],[0,50,50],[34,33,33]],[[50,50,0],[50,0,50],[0,50,50],[0,0,100],[0,100,0],[100,0,0],[16,38,46],[50,29,21],[50,50,0],[50,0,50],[0,50,50],[34,33,33]],[[50,50,0],[50,0,50],[0,50,50],[0,0,100],[0,100,0],[100,0,0],[17,36,47],[49,31,20],[50,50,0],[50,0,50],[0,50,50],[34,33,33]],[[0,0,100],[18,82,0],[52,48,0],[13,37,50],[37,13,50],[81,19,0],[0,0,99],[18,82,0],[82,18,0],[17,37,47],[50,30,20],[16,34,50]],[[38,12,50],[50,50,0],[12,38,50],[0,0,100],[18,82,0],[82,18,0],[17,36,47],[50,31,20],[39,11,50],[50,50,0],[11,39,50],[33,33,33]],[[39,11,50],[50,50,0],[11,39,50],[0,0,100],[16,84,0],[84,16,0],[17,36,47],[50,30,20],[50,50,0],[47,3,50],[3,47,50],[33,33,33]],[[41,9,50],[50,50,0],[9,41,50],[0,0,100],[6,94,0],[94,6,0],[17,36,47],[50,31,20],[50,50,0],[49,1,50],[1,49,50],[33,33,33]],[[45,5,50],[50,50,0],[5,45,50],[0,0,100],[1,99,0],[99,1,0],[17,36,47],[50,31,20],[50,50,0],[50,0,50],[0,50,50],[33,33,33]],[[50,50,0],[48,2,50],[2,48,50],[0,0,100],[0,100,0],[100,0,0],[17,35,48],[49,32,19],[50,50,0],[50,0,50],[0,50,50],[33,33,33]],[[50,50,0],[50,1,50],[1,50,50],[0,0,100],[0,100,0],[100,0,0],[18,34,48],[49,33,18],[50,50,0],[50,0,50],[0,50,50],[34,33,33]],[[50,50,0],[50,0,50],[0,50,50],[0,0,100],[0,100,0],[100,0,0],[20,31,50],[47,36,17],[50,50,0],[50,0,50],[0,50,50],[34,33,33]],[[0,0,100],[32,68,0],[19,31,50],[31,19,50],[50,50,0],[68,32,0],[0,0,99],[32,68,0],[68,32,1],[19,32,49],[48,35,17],[21,30,50]],[[32,18,50],[50,50,0],[18,32,50],[0,0,100],[32,68,0],[68,32,0],[20,31,50],[47,36,17],[33,17,50],[50,50,0],[17,33,50],[33,33,33]],[[33,17,50],[50,50,0],[17,33,50],[0,0,100],[29,71,0],[71,29,0],[19,31,49],[47,35,17],[50,50,0],[42,8,50],[8,43,50],[33,33,33]],[[35,15,50],[50,50,0],[15,35,50],[0,0,100],[12,88,0],[88,12,0],[19,31,49],[47,36,17],[50,50,0],[49,1,50],[1,49,50],[33,33,33]],[[50,50,0],[39,11,50],[11,39,50],[0,0,100],[2,98,0],[98,2,0],[20,31,50],[47,36,17],[50,50,0],[50,0,50],[0,50,50],[33,33,33]],[[50,50,0],[45,5,50],[5,45,50],[0,0,100],[0,100,0],[100,0,0],[20,30,50],[46,37,17],[50,50,0],[50,0,50],[0,50,50],[33,33,33]],[[50,50,0],[49,1,50],[1,49,50],[0,0,100],[0,100,0],[100,0,0],[21,29,50],[45,38,17],[50,50,0],[50,0,50],[0,50,50],[34,33,33]],[[50,50,0],[50,0,50],[0,50,50],[0,0,100],[0,100,0],[100,0,0],[23,26,51],[44,40,16],[50,50,0],[50,0,50],[0,50,50],[34,33,33]],[[0,0,100],[50,50,0],[25,25,50],[25,25,50],[50,50,0],[50,50,0],[0,0,99],[50,50,0],[50,50,1],[25,25,51],[42,42,16],[25,25,50]],[[25,25,50],[50,50,0],[25,25,50],[0,0,100],[50,50,0],[50,50,0],[25,25,51],[42,42,16],[25,25,50],[50,50,0],[25,25,50],[33,33,33]],[[25,25,50],[50,50,0],[25,25,50],[0,0,100],[50,50,0],[50,50,0],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[25,25,50],[50,50,0],[25,25,50],[0,0,100],[50,50,0],[50,50,0],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[50,50,0],[25,25,50],[25,25,50],[0,0,100],[50,50,0],[50,50,0],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[50,50,0],[25,25,50],[25,25,50],[0,0,100],[50,50,0],[50,50,0],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[50,50,0],[25,25,50],[25,25,50],[0,0,100],[50,50,0],[50,50,0],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[50,50,0],[22,28,50],[3,47,50],[0,0,100],[99,1,0],[2,98,0],[25,25,51],[42,42,16],[50,50,0],[7,43,50],[31,19,50],[34,34,33]],[[0,50,50],[1,50,50],[99,0,0],[1,50,50],[49,25,25],[50,25,25],[0,50,50],[1,49,49],[98,1,1],[16,42,42],[51,25,25],[2,49,49]],[[49,25,25],[50,25,25],[1,50,50],[0,50,50],[1,50,50],[99,1,1],[16,42,42],[51,25,25],[49,26,26],[50,25,25],[1,49,49],[33,33,33]],[[49,25,25],[50,25,25],[1,50,50],[0,50,50],[1,50,50],[99,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[33,33,33]],[[50,25,25],[50,25,25],[1,50,50],[0,50,50],[0,50,50],[100,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[33,33,33]],[[50,25,25],[50,25,25],[0,50,50],[0,50,50],[0,50,50],[100,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[33,33,33]],[[50,25,25],[50,25,25],[0,50,50],[0,50,50],[0,50,50],[100,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[34,33,33]],[[50,25,25],[50,25,25],[0,50,50],[0,50,50],[0,50,50],[100,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[34,33,33]],[[50,25,25],[50,25,25],[0,50,50],[0,50,50],[0,50,50],[100,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[34,33,33]],[[0,50,50],[4,48,48],[96,2,2],[4,48,48],[46,27,27],[50,25,25],[0,50,50],[4,48,48],[95,2,2],[16,42,42],[51,25,25],[7,47,47]],[[46,27,27],[50,25,25],[4,48,48],[0,50,50],[4,48,48],[96,2,2],[16,42,42],[51,25,25],[47,27,27],[50,25,25],[4,48,48],[33,33,33]],[[47,26,26],[50,25,25],[3,48,48],[0,50,50],[4,48,48],[96,2,2],[16,42,42],[51,25,25],[49,25,25],[50,25,25],[1,50,50],[33,33,33]],[[48,26,26],[50,25,25],[2,49,49],[0,50,50],[1,49,49],[98,1,1],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[33,33,33]],[[49,25,25],[50,25,25],[1,50,50],[0,50,50],[0,50,50],[100,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[33,33,33]],[[50,25,25],[50,25,25],[0,50,50],[0,50,50],[0,50,50],[100,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[34,33,33]],[[50,25,25],[50,25,25],[0,50,50],[0,50,50],[0,50,50],[100,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[34,33,33]],[[50,25,25],[50,25,25],[0,50,50],[0,50,50],[0,50,50],[100,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[34,33,33]],[[0,50,50],[9,45,45],[91,5,5],[8,46,46],[42,29,29],[50,25,25],[0,50,50],[9,45,45],[90,5,5],[16,42,42],[51,25,25],[12,44,44]],[[42,29,29],[50,25,25],[8,46,46],[0,50,50],[9,45,45],[91,5,5],[16,42,42],[51,25,25],[43,28,28],[50,25,25],[7,46,46],[33,33,33]],[[43,28,28],[50,25,25],[7,47,47],[0,50,50],[8,46,46],[92,4,4],[16,42,42],[51,25,25],[49,26,26],[50,25,25],[1,49,49],[33,33,33]],[[46,27,27],[50,25,25],[4,48,48],[0,50,50],[3,49,49],[97,2,2],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[33,33,33]],[[48,26,26],[50,25,25],[2,49,49],[0,50,50],[0,50,50],[100,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[33,33,33]],[[49,25,25],[50,25,25],[1,50,50],[0,50,50],[0,50,50],[100,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[34,33,33]],[[50,25,25],[50,25,25],[0,50,50],[0,50,50],[0,50,50],[100,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[34,33,33]],[[50,25,25],[50,25,25],[0,50,50],[0,50,50],[0,50,50],[100,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[34,33,33]],[[0,50,50],[18,41,41],[14,43,43],[50,25,25],[36,32,32],[82,9,9],[0,50,50],[18,41,41],[81,9,9],[16,42,42],[51,25,25],[18,41,41]],[[37,32,32],[50,25,25],[13,43,43],[0,50,50],[18,41,41],[82,9,9],[16,42,42],[51,25,25],[39,31,31],[50,25,25],[11,44,44],[33,33,33]],[[38,31,31],[50,25,25],[12,44,44],[0,50,50],[16,42,42],[84,8,8],[16,42,42],[51,25,25],[50,25,25],[48,26,26],[2,49,49],[33,33,33]],[[42,29,29],[50,25,25],[8,46,46],[0,50,50],[5,48,48],[95,2,2],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[33,33,33]],[[46,27,27],[50,25,25],[4,48,48],[0,50,50],[1,50,50],[99,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[33,33,33]],[[49,26,26],[50,25,25],[1,49,49],[0,50,50],[0,50,50],[100,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[33,33,33]],[[50,25,25],[50,25,25],[0,50,50],[0,50,50],[0,50,50],[100,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[34,33,33]],[[50,25,25],[50,25,25],[0,50,50],[0,50,50],[0,50,50],[100,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[34,33,33]],[[0,50,50],[31,34,34],[20,40,40],[30,35,35],[50,25,25],[69,16,16],[0,50,50],[31,34,34],[68,16,16],[16,42,42],[51,25,25],[23,39,39]],[[30,35,35],[50,25,25],[20,40,40],[0,50,50],[32,34,34],[68,16,16],[16,42,42],[51,25,25],[34,33,33],[50,25,25],[16,42,42],[33,33,33]],[[32,34,34],[50,25,25],[18,41,41],[0,50,50],[28,36,36],[72,14,14],[16,42,42],[51,25,25],[50,25,25],[46,27,27],[4,48,48],[33,33,33]],[[37,32,32],[50,25,25],[13,43,43],[0,50,50],[8,46,46],[92,4,4],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[1,50,50],[33,33,33]],[[44,28,28],[50,25,25],[6,47,47],[0,50,50],[1,50,50],[99,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[33,33,33]],[[49,26,26],[50,25,25],[1,49,49],[0,50,50],[0,50,50],[100,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[33,33,33]],[[50,25,25],[50,25,25],[0,50,50],[0,50,50],[0,50,50],[100,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[33,33,33]],[[50,25,25],[50,25,25],[0,50,50],[0,50,50],[0,50,50],[100,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[33,33,33]],[[0,50,50],[49,26,26],[27,37,37],[23,38,38],[50,25,25],[51,24,24],[0,50,50],[49,26,26],[51,25,25],[16,42,42],[51,25,25],[28,36,36]],[[24,38,38],[50,25,25],[26,37,37],[0,50,50],[49,26,26],[51,24,24],[16,42,42],[51,25,25],[27,37,37],[50,25,25],[23,38,38],[33,33,33]],[[25,38,38],[50,25,25],[25,37,37],[0,50,50],[44,28,28],[56,22,22],[16,42,42],[51,25,25],[50,25,25],[42,29,29],[8,46,46],[33,33,33]],[[29,35,35],[50,25,25],[21,40,40],[0,50,50],[15,42,42],[85,8,8],[16,42,42],[51,25,25],[50,25,25],[49,25,25],[1,50,50],[33,33,33]],[[39,30,30],[50,25,25],[11,45,45],[0,50,50],[1,49,49],[99,1,1],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[33,33,33]],[[49,26,26],[50,25,25],[1,49,49],[0,50,50],[0,50,50],[100,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[33,33,33]],[[50,25,25],[50,25,25],[0,50,50],[0,50,50],[0,50,50],[100,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[33,33,33]],[[50,25,25],[50,25,25],[0,50,50],[0,50,50],[0,50,50],[100,0,0],[16,42,42],[51,25,25],[50,25,25],[50,25,25],[0,50,50],[33,33,33]],[[60,37,3],[6,30,64],[33,33,33],[46,37,18],[20,31,49],[33,33,33],[57,41,2],[9,26,65],[33,33,33],[31,49,21],[24,27,48],[33,33,33]],[[49,31,20],[23,27,50],[33,33,33],[62,33,5],[4,34,62],[33,33,33],[33,38,29],[22,36,42],[31,43,26],[22,31,47],[33,33,33],[33,33,33]],[[44,38,17],[22,29,49],[33,33,33],[60,37,3],[5,32,63],[33,33,33],[48,19,33],[39,19,41],[28,23,49],[21,31,49],[33,33,33],[33,33,33]],[[48,34,19],[22,29,49],[33,33,33],[61,36,4],[3,36,61],[33,33,33],[39,43,18],[21,30,49],[29,34,37],[27,26,47],[33,33,33],[33,33,33]],[[43,40,17],[24,26,50],[33,33,33],[61,36,3],[5,33,62],[33,33,33],[46,21,32],[24,34,42],[33,33,33],[48,31,21],[18,35,47],[33,33,33]],[[33,33,33],[44,39,17],[23,27,50],[59,38,3],[8,27,65],[33,33,33],[25,27,48],[43,38,19],[33,33,33],[45,37,18],[20,32,48],[33,33,33]],[[33,33,33],[44,39,17],[23,27,50],[62,33,5],[6,30,64],[33,33,33],[19,49,32],[33,20,47],[33,33,33],[41,42,18],[24,27,50],[33,33,33]],[[50,46,4],[43,9,48],[8,43,49],[98,2,0],[1,94,5],[0,4,96],[22,39,39],[21,37,41],[47,45,7],[27,23,50],[12,39,49],[33,33,33]],[[1,1,99],[50,50,0],[25,25,49],[25,25,50],[50,50,1],[49,49,1],[1,1,98],[50,50,0],[49,49,2],[25,25,51],[42,42,16],[26,26,49]],[[25,25,50],[50,50,1],[25,25,49],[1,1,99],[50,50,0],[49,49,1],[25,25,51],[42,42,16],[25,25,50],[50,50,1],[25,25,49],[33,33,33]],[[25,25,50],[50,50,1],[25,25,49],[0,0,99],[50,50,0],[50,50,1],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[25,25,50],[50,50,0],[25,25,50],[0,0,100],[50,50,0],[50,50,0],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[50,50,0],[25,25,50],[25,25,50],[0,0,100],[50,50,0],[50,50,0],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[50,50,0],[25,25,50],[25,25,50],[0,0,100],[50,50,0],[50,50,0],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[50,50,0],[25,25,50],[25,25,50],[0,0,100],[50,50,0],[50,50,0],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[50,50,0],[14,36,50],[31,19,50],[0,0,100],[97,3,0],[2,98,0],[25,25,51],[42,42,16],[50,50,0],[27,23,50],[2,48,50],[33,33,33]],[[2,2,96],[50,50,0],[26,26,47],[25,25,50],[49,49,3],[48,48,4],[2,2,95],[50,50,0],[48,48,5],[25,25,51],[42,42,16],[27,27,46]],[[25,25,50],[49,49,3],[26,26,47],[2,2,96],[50,50,0],[48,48,4],[25,25,51],[42,42,16],[25,25,50],[49,49,2],[26,26,48],[33,33,33]],[[25,25,50],[49,49,2],[26,26,48],[2,2,96],[50,50,0],[48,48,4],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[25,25,50],[49,49,1],[26,26,49],[0,0,99],[50,50,0],[50,50,1],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[50,50,0],[25,25,50],[25,25,50],[0,0,100],[50,50,0],[50,50,0],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[50,50,0],[25,25,50],[25,25,50],[0,0,100],[50,50,0],[50,50,0],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[50,50,0],[25,25,50],[25,25,50],[0,0,100],[50,50,0],[50,50,0],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[50,50,0],[38,12,50],[43,7,50],[0,0,100],[98,2,0],[1,99,0],[25,25,51],[42,42,16],[50,50,0],[16,35,50],[3,48,50],[33,33,33]],[[5,5,90],[50,50,0],[28,28,43],[25,25,50],[47,47,7],[45,45,10],[5,5,89],[50,50,0],[45,45,11],[25,25,51],[42,42,16],[29,29,42]],[[25,25,50],[47,47,6],[28,28,44],[5,5,90],[50,50,0],[45,45,10],[25,25,51],[42,42,16],[25,25,50],[48,48,4],[27,27,46],[33,33,33]],[[25,25,50],[47,47,5],[28,28,45],[4,4,91],[50,50,0],[46,46,9],[25,25,51],[42,42,16],[50,50,1],[25,25,50],[25,25,49],[33,33,33]],[[25,25,50],[48,48,3],[27,27,47],[1,1,98],[50,50,0],[49,49,2],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[50,50,1],[25,25,50],[25,25,49],[0,0,100],[50,50,0],[50,50,0],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[50,50,0],[25,25,50],[25,25,50],[0,0,100],[50,50,0],[50,50,0],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[50,50,0],[25,25,50],[25,25,50],[0,0,100],[50,50,0],[50,50,0],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[50,50,0],[22,28,50],[19,31,50],[0,0,100],[99,1,0],[0,100,0],[25,25,51],[42,42,16],[50,50,0],[36,14,50],[3,48,50],[33,33,33]],[[10,10,80],[50,50,0],[31,31,39],[25,25,50],[44,44,11],[40,40,20],[10,10,80],[50,50,0],[40,40,20],[25,25,51],[42,42,16],[31,31,38]],[[25,25,50],[45,45,11],[30,30,39],[10,10,80],[50,50,0],[40,40,20],[25,25,51],[42,42,16],[25,25,50],[46,46,9],[29,29,41],[33,33,33]],[[25,25,50],[45,45,10],[30,30,40],[9,9,83],[50,50,0],[41,41,17],[25,25,51],[42,42,16],[49,49,3],[25,25,50],[26,26,48],[33,33,33]],[[46,46,7],[25,25,50],[29,29,43],[3,3,95],[50,50,0],[47,47,5],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[49,49,2],[25,25,50],[26,26,48],[0,0,99],[50,50,0],[50,50,1],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[50,50,0],[25,25,50],[25,25,50],[0,0,100],[50,50,0],[50,50,0],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[50,50,1],[25,25,49],[25,25,50],[0,0,100],[50,50,0],[50,50,0],[25,25,51],[42,42,16],[50,50,0],[25,25,50],[25,25,50],[33,33,33]],[[50,50,0],[5,45,50],[41,9,50],[0,0,100],[99,1,0],[6,94,0],[25,25,51],[42,42,16],[50,50,0],[21,30,50],[16,35,50],[33,33,33]]],"rays":[["A",0,0.0,1,1],["A",0,0.0,2,2],["A",0,0.0,3,3],["A",0,0.0,4,4],["A",0,0.0,5,5],["A",0,0.0,6,6],["A",0,0.0,7,7],["A",0,0.0,8,8],["A",1,7.5,1,9],["A",1,7.5,2,10],["A",1,7.5,3,11],["A",1,7.5,4,12],["A",1,7.5,5,13],["A",1,7.5,6,14],["A",1,7.5,7,15],["A",1,7.5,8,16],["A",2,15.0,1,17],["A",2,15.0,2,18],["A",2,15.0,3,19],["A",2,15.0,4,20],["A",2,15.0,5,21],["A",2,15.0,6,22],["A",2,15.0,7,23],["A",2,15.0,8,24],["A",3,22.5,1,25],["A",3,22.5,2,26],["A",3,22.5,3,27],["A",3,22.5,4,28],["A",3,22.5,5,29],["A",3,22.5,6,30],["A",3,22.5,7,31],["A",3,22.5,8,32],["A",4,30.0,1,33],["A",4,30.0,2,34],["A",4,30.0,3,35],["A",4,30.0,4,36],["A",4,30.0,5,37],["A",4,30.0,6,38],["A",4,30.0,7,39],["A",4,30.0,8,40],["A",5,37.5,1,41],["A",5,37.5,2,42],["A",5,37.5,3,43],["A",5,37.5,4,44],["A",5,37.5,5,45],["A",5,37.5,6,46],["A",5,37.5,7,47],["A",5,37.5,8,48],["A",6,45.0,1,49],["A",6,45.0,2,50],["A",6,45.0,3,51],["A",6,45.0,4,52],["A",6,45.0,5,53],["A",6,45.0,6,54],["A",6,45.0,7,55],["A",6,45.0,8,56],["C",0,0.0,1,1],["C",0,0.0,2,2],["C",0,0.0,3,3],["C",0,0.0,4,4],["C",0,0.0,5,5],["C",0,0.0,6,6],["C",0,0.0,7,7],["C",0,0.0,8,8],["C",1,7.819,1,57],["C",1,7.819,2,58],["C",1,7.819,3,59],["C",1,7.819,4,60],["C",1,7.819,5,61],["C",1,7.819,6,62],["C",1,7.819,7,63],["C",1,7.819,8,64],["C",2,15.639,1,65],["C",2,15.639,2,66],["C",2,15.639,3,67],["C",2,15.639,4,68],["C",2,15.639,5,69],["C",2,15.639,6,70],["C",2,15.639,7,71],["C",2,15.639,8,72],["C",3,23.458,1,73],["C",3,23.458,2,74],["C",3,23.458,3,75],["C",3,23.458,4,76],["C",3,23.458,5,77],["C",3,23.458,6,78],["C",3,23.458,7,79],["C",3,23.458,8,80],["C",4,31.277,1,81],["C",4,31.277,2,82],["C",4,31.277,3,83],["C",4,31.277,4,84],["C",4,31.277,5,85],["C",4,31.277,6,86],["C",4,31.277,7,87],["C",4,31.277,8,88],["C",5,39.097,1,89],["C",5,39.097,2,90],["C",5,39.097,3,91],["C",5,39.097,4,92],["C",5,39.097,5,93],["C",5,39.097,6,94],["C",5,39.097,7,95],["C",5,39.097,8,96],["C",6,46.916,1,97],["C",6,46.916,2,98],["C",6,46.916,3,99],["C",6,46.916,4,100],["C",6,46.916,5,101],["C",6,46.916,6,102],["C",6,46.916,7,103],["C",6,46.916,8,104],["C",7,54.736,1,105],["C",7,54.736,2,106],["C",7,54.736,3,107],["C",7,54.736,4,108],["C",7,54.736,5,109],["C",7,54.736,6,110],["C",7,54.736,7,111],["C",7,54.736,8,112],["D",0,0.0,1,49],["D",0,0.0,2,50],["D",0,0.0,3,51],["D",0,0.0,4,52],["D",0,0.0,5,53],["D",0,0.0,6,54],["D",0,0.0,7,55],["D",0,0.0,8,56],["D",1,7.053,1,113],["D",1,7.053,2,114],["D",1,7.053,3,115],["D",1,7.053,4,116],["D",1,7.053,5,117],["D",1,7.053,6,118],["D",1,7.053,7,119],["D",1,7.053,8,120],["D",2,14.106,1,121],["D",2,14.106,2,122],["D",2,14.106,3,123],["D",2,14.106,4,124],["D",2,14.106,5,125],["D",2,14.106,6,126],["D",2,14.106,7,127],["D",2,14.106,8,128],["D",3,21.159,1,129],["D",3,21.159,2,130],["D",3,21.159,3,131],["D",3,21.159,4,132],["D",3,21.159,5,133],["D",3,21.159,6,134],["D",3,21.159,7,135],["D",3,21.159,8,136],["D",4,28.212,1,137],["D",4,28.212,2,138],["D",4,28.212,3,139],["D",4,28.212,4,140],["D",4,28.212,5,141],["D",4,28.212,6,142],["D",4,28.212,7,143],["D",4,28.212,8,144],["D",5,35.264,1,105],["D",5,35.264,2,106],["D",5,35.264,3,107],["D",5,35.264,4,108],["D",5,35.264,5,109],["D",5,35.264,6,110],["D",5,35.264,7,111],["D",5,35.264,8,112]]};
@@ -612,8 +900,11 @@ function polRay(far){ // samples along Γ→X ([100]), Γ→M ([110]) or Γ→R 
 function renderPolar(){
   if(!window.Plotly||typeof POL==="undefined")return;
   const el=document.getElementById("pPolar"),fg=css("--fg"),mut=css("--muted"),line=css("--line"),rgb=AXC.map(css).map(hexRgb);
-  const mode=document.getElementById("polMode").value,band=+document.getElementById("polBand").value;
-  document.getElementById("polBand").style.display=mode==="map"?"":"none";
+  const mode=document.getElementById("polMode").value,bsel=document.getElementById("polBand").value;
+  const band=bsel[0]==="g"?+bsel.slice(1):bsel==="all"?0:+bsel;
+  document.getElementById("polBand").style.display=mode==="speed"?"none":"";
+  document.getElementById("polRad").style.display=mode==="funnel"?"":"none";
+  if(mode==="funnel"){renderFunnel(el,bsel);return}
   const narrow=el.clientWidth<640,tr=[],L=baseLayout();delete L._axis;
   const lay={...L,margin:{l:10,r:10,t:30,b:20},height:narrow?1050:420,annotations:[]};
   let fmin=Infinity,fmax=-Infinity,vmax=0;
@@ -660,19 +951,73 @@ function renderPolar(){
     :`Phase velocity ω/|k| of the three acoustic waves at the innermost point of each ray (|k| ≈ 0.016–0.027 π/a). A circle would mean the same speed in every direction. Colour shows the direction of motion: along the ray for the longitudinal wave, across it for the two shear waves. These are not static sound speeds: the waves are already at ${fmin.toFixed(0)}–${fmax.toFixed(0)} Hz here, below but close to the resonance, and the flat 344.5 Hz band has been left out. Caveat: at 16³ voxels the silicone coatings of neighbouring cells touch along the cube axes (the real 0.5 mm epoxy gap is thinner than one voxel), which can change the direction dependence.`)
     +` ${done} of ${POL.k.length} k-points of the polar sweep.`;
 }
+// 3D funnel: the three faces through Γ unfolded into one fan around Γ, frequency as height.
+// Fan angle: [100] → [110] along k_z = 0 (0–45°), [110] → [111] along k_x = k_y (45–80.3°),
+// [111] → [100] along k_y = k_z (80.3–135°). The borders between the segments are the path edges ΓX, ΓM, ΓR;
+// the outer rim is the outer face k_x = π/a (edges X M, M R, R X).
+function renderFunnel(el,bsel){
+  const fg=css("--fg"),mut=css("--muted"),rgb=AXC.map(css).map(hexRgb);
+  const shown=bsel==="all"?[...Array(12).keys()]:bsel[0]==="g"?[0,1,2].map(i=>i+ +bsel.slice(1)):[+bsel];
+  const rA=polRows("A"),rD=polRows("D"),rC=polRows("C");
+  const aA=rA[rA.length-1].angle,aD=rD[rD.length-1].angle,aC=rC[rC.length-1].angle;
+  const segs=[{rays:rA,fan:a=>a,face:"k_z = 0",from:"[100]"},{rays:rD,fan:a=>aA+a,face:"k_x = k_y",from:"[110]"},
+    {rays:[...rC].reverse(),fan:a=>aA+aD+(aC-a),face:"k_y = k_z",from:"[100]"}];
+  const sq=document.getElementById("polRad").value==="sqrt",rad=r=>sq?Math.sqrt(r):r;
+  const X=[],Y=[],V=[],I=[],J=[],K=[],borders=[],rim=[];
+  segs.forEach((sg,si)=>{const base=V.length,nd=sg.rays.length,ns=sg.rays[0].samples.length;
+    sg.rays.forEach(ray=>{const fa=sg.fan(ray.angle),ph=fa*Math.PI/180;
+      ray.samples.forEach(q=>{X.push(rad(q.r)*Math.cos(ph));Y.push(rad(q.r)*Math.sin(ph));V.push({i:q.i,r:q.r,a:ray.angle,fa,face:sg.face,from:sg.from,rim:q.m===ray.samples.length-1})})});
+    const id=(d,j)=>base+d*ns+j;
+    for(let d=0;d<nd-1;d++)for(let j=0;j<ns-1;j++){
+      if(j>0){I.push(id(d,j));J.push(id(d+1,j));K.push(id(d+1,j+1))}
+      I.push(id(d,j));J.push(id(d+1,j+1));K.push(id(d,j+1))}
+    borders.push([...Array(ns).keys()].map(j=>id(0,j)));
+    if(si===2)borders.push([...Array(ns).keys()].map(j=>id(nd-1,j)));
+    for(let d=0;d<nd;d++)rim.push(id(d,ns-1))});
+  const tr=[];let zmin=Infinity;
+  for(const b of shown){
+    const z=V.map(v=>POL.f[v.i][b]);zmin=Math.min(zmin,...z);
+    tr.push({type:"mesh3d",x:X,y:Y,z,i:I,j:J,k:K,vertexcolor:V.map(v=>polColor(POL.p[v.i][b].map(x=>x/100),rgb)),opacity:1,flatshading:false,
+      lighting:{ambient:0.7,diffuse:0.55,specular:0.05,roughness:0.9},
+      customdata:V.map(v=>[v.r.toFixed(3),v.a.toFixed(1),v.face,v.from,polTxt(POL.p[v.i][b].map(x=>x/100))]),
+      hovertemplate:`Band ${b+1}<br>f = %{z:.1f} Hz<br>|k| = %{customdata[0]} π/a<br>%{customdata[1]}° from %{customdata[3]} on face %{customdata[2]}<br>%{customdata[4]}<extra></extra>`});
+    const lx=[],ly=[],lz=[];
+    for(const line of[...borders,rim]){for(const n of line){lx.push(X[n]);ly.push(Y[n]);lz.push(POL.f[V[n].i][b]+3)}lx.push(null);ly.push(null);lz.push(null)}
+    tr.push({type:"scatter3d",mode:"lines",x:lx,y:ly,z:lz,line:{color:fg,width:4},hoverinfo:"skip"})}
+  // corner labels just outside the rim, at the height of the highest shown band there
+  const top=n=>Math.max(...shown.map(b=>POL.f[V[n].i][b]));
+  const labs=[["Γ",[0,0],zmin]];
+  for(const[t,a]of[["X",0],["M",aA],["R",aA+aD],["X",aA+aD+aC]]){
+    const n=V.reduce((best,v,j)=>v.rim&&(best<0||Math.abs(v.fa-a)<Math.abs(V[best].fa-a))?j:best,-1);
+    labs.push([t,[X[n]*1.1,Y[n]*1.1],top(n)])}
+  tr.push({type:"scatter3d",mode:"text",x:labs.map(l=>l[1][0]),y:labs.map(l=>l[1][1]),z:labs.map(l=>l[2]),text:labs.map(l=>l[0]),
+    textposition:"top center",textfont:{color:fg,size:16,family:"Newsreader, Georgia, serif"},hoverinfo:"skip"});
+  const L=baseLayout(),ax=L._axis;delete L._axis;
+  const hide={title:{text:""},showticklabels:false,showgrid:false,zeroline:false,showbackground:false,showspikes:false};
+  const scene={bgcolor:css("--surface"),xaxis:{...ax,...hide},yaxis:{...ax,...hide},zaxis:{...ax,title:{text:"f (Hz)"},showbackground:false,showspikes:false},
+    aspectmode:"manual",aspectratio:{x:1.4,y:1.1,z:0.9}};
+  if(!el._fcam){scene.camera={eye:{x:0.2,y:-1.9,z:1.0}};el._fcam=1}
+  Plotly.react(el,tr,{...L,height:Math.max(460,Math.min(620,el.clientWidth*0.6)),margin:{l:0,r:0,t:0,b:0},scene,uirevision:"funnel"},cfg);
+  document.getElementById("polHint").innerHTML=`The three faces through Γ, unfolded into one fan around Γ (centre), in polar form: the direction of travel is the angle, the distance from Γ stands for |k| (${sq?"drawn as √|k|, which stretches the region near Γ where the acoustic bands rise; switch to the true scale to see how narrow the funnel really is":"true scale"}), and the frequency is the height. Going round the fan: [100] → [110] on the face k<sub>z</sub> = 0, [110] → [111] on k<sub>x</sub> = k<sub>y</sub>, and [111] → [100] on k<sub>y</sub> = k<sub>z</sub>, 135° in total. The black lines are the standard path: the borders between the segments are Γ X, Γ M and Γ R, and the outer rim is the outer face k<sub>x</sub> = π/a. The acoustic bands 1–3 form a funnel that rises from 0 at Γ and levels off at the flat 344.5 Hz band. Bands 7–9 form a second funnel above the gap: its tip at Γ, at 759 Hz, is the upper gap edge, and it opens up to about 1.37 kHz. Colour = direction of motion. Drag to rotate. ${POL.f.filter(Boolean).length} of ${POL.k.length} k-points of the polar sweep.`;
+}
 const polBandSel=document.getElementById("polBand");
+for(const[v,t]of[["g0","Bands 1–3"],["g3","Bands 4–6"],["g6","Bands 7–9"],["g9","Bands 10–12"],["all","All 12 bands"]]){const o=document.createElement("option");o.value=v;o.textContent=t;polBandSel.appendChild(o)}
 for(let b=0;b<12;b++){const o=document.createElement("option");o.value=b;o.textContent=`Band ${b+1}`;polBandSel.appendChild(o)}
-polBandSel.value="5";
+polBandSel.value="g0";
 
-const onTheme=()=>{schedule();requestAnimationFrame(renderFEM)};
+const onTheme=()=>{schedule();requestAnimationFrame(renderFEM);sbSchedule();requestAnimationFrame(renderV3);requestAnimationFrame(renderLiuCell)};
 document.getElementById("bandSel").addEventListener("change",schedule);
 document.getElementById("polSel").addEventListener("change",schedule);
 document.getElementById("femSel").addEventListener("change",renderFEM);
 document.getElementById("polMode").addEventListener("change",renderPolar);
 document.getElementById("polBand").addEventListener("change",renderPolar);
+document.getElementById("polRad").addEventListener("change",renderPolar);
 addEventListener("resize",()=>{clearTimeout(window._pr);window._pr=setTimeout(renderPolar,200)});
 try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",onTheme)}catch(e){}
 new MutationObserver(onTheme).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
 loadPreset(PRESETS[0]);
 renderFEM();
+renderSB();
+renderV3();
+renderLiuCell();
 </script>

@@ -1,3 +1,28 @@
+# Band gaps beyond the band-diagram path in 3D unit cells
+
+Code, data and an interactive page for the question: when does the standard
+band diagram (k on the edges of the irreducible Brillouin zone) misjudge
+complete band gaps of 3D unit cells, and are the faces of the zone enough?
+**Results so far: [FINDINGS.md](FINDINGS.md).** How to cite: [CITATION.cff](CITATION.cff).
+
+| Path | What it is |
+|---|---|
+| `voxel_fem.py` | open-source Floquet–Bloch FEM solver for voxel unit cells (resumable sweeps) |
+| `run.sh` | start/status/stop a sweep as a memory-capped background job (Linux, systemd) |
+| `kpoints.py`, `polar_kpoints.py` | k-points on path, faces, volume; polar rays through Γ |
+| `analyze.py` | compares gaps found on path, faces and volume |
+| `cells/` | unit-cell definitions (Liu-type cubic cell, coated core) |
+| `data/` | FEM results for the Liu-type cell (84-point grid, 145-point polar sweep) |
+| `study/` | spring-model scripts behind the symmetry results |
+| `web/brillouin-surface.html` | interactive page (open in a browser; loads Plotly from a CDN) |
+
+Set-up: `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`.
+License: MIT (see `LICENSE`).
+
+The rest of this file is the original research plan.
+
+---
+
 # FEM sweep plan: path vs faces vs volume in 3D unit cells
 
 ## Research question

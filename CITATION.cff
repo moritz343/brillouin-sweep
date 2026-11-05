@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software or data, please cite it as below."
+title: "Band gaps beyond the band-diagram path in 3D unit cells: face nets, symmetry, and an open-source Floquet–Bloch voxel solver"
+version: 0.1.0
+date-released: 2026-11-05
+authors:
+  - family-names: Wenzel
+    given-names: Moritz
+license: MIT
+repository-code: "https://github.com/moritz343/brillouin-sweep"
+keywords:
+  - phononic crystals
+  - acoustic metamaterials
+  - locally resonant metamaterials
+  - Floquet-Bloch
+  - band structure
+  - Brillouin zone
+  - band gap
+  - finite element method
